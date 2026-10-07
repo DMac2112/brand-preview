@@ -20,18 +20,17 @@
   [hidden]{display:none!important}
   :focus-visible{outline:2px solid var(--ink);outline-offset:3px}
 
-  /* video stage */
-  .stage{position:fixed;inset:0;background:#fff;overflow:hidden}
-  .film{position:absolute;inset:0;--lift:-21%;transition:transform var(--lt,2.7s) cubic-bezier(.65,0,.35,1)}
-  /* projects screen: pull the drip line up to the top edge so it just hangs into the page */
-  .stage.lift .film{transform:translateY(var(--lift))}
-  .stage video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:62% 50%;opacity:0;pointer-events:none}
-  .stage video.on{opacity:1}
+  /* liquid stage */
+  .stage{position:fixed;inset:0;background:var(--paper)}
+  .stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+  /* without WebGL: flat colours per screen */
+  .nogl[data-at="1"] .stage{background:var(--gunmetal)}
+  .nogl[data-at="2"] .stage,.nogl[data-at="3"] .stage{background:#fff}
 
-  /* screens: text layers above the film */
+  /* screens: text layers above the liquid */
   .screen{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:0;transition:opacity .25s}
   .screen.on{opacity:1;pointer-events:auto}
-  .screen.leaving{opacity:1;animation:wipe var(--wipe,.9s) cubic-bezier(.55,0,.75,.4) forwards}
+  .screen.leaving{opacity:1;animation:wipe var(--wipe,.6s) cubic-bezier(.55,0,.75,.4) forwards}
   .screen.leaving.up{animation-name:wipeUp}
   @keyframes wipe{from{clip-path:inset(0 0 0 0)}to{clip-path:inset(0 0 0 100%)}}
   @keyframes wipeUp{from{clip-path:inset(0 0 0 0)}to{clip-path:inset(0 0 100% 0)}}
@@ -53,7 +52,7 @@
   .sheet li{padding:12px 0;border-top:1px solid #17191c22;font-size:clamp(16px,1.35vw,19px);line-height:1.4}
 
   /* 3 projects — white, under the drip line */
-  .projects{position:absolute;left:var(--g);right:var(--g);top:12vh;bottom:max(24px,6vh);margin:0 auto;max-width:1320px;
+  .projects{position:absolute;left:var(--g);right:var(--g);top:19vh;bottom:max(24px,6vh);margin:0 auto;max-width:1320px;
     display:grid;grid-template-columns:minmax(0,1.5fr) minmax(240px,1fr);gap:clamp(20px,3vw,56px);align-items:center;align-content:center}
   .shot{position:relative;aspect-ratio:16/10;border-radius:4px;overflow:hidden;background:#f1f1ef;box-shadow:0 1px 0 #0000000f,0 18px 40px -24px #2c313580}
   .shot img{width:100%;height:100%;object-fit:cover;object-position:top;display:block}
@@ -69,7 +68,7 @@
   .ctrl span{font-variant-numeric:tabular-nums;color:var(--soft);font-size:15px;min-width:4ch}
 
   /* 4 end */
-  .end{position:absolute;right:var(--g);top:clamp(28px,12vh,140px);max-width:min(700px,calc(100% - 2*var(--g)));text-align:right}
+  .end{position:absolute;right:var(--g);top:clamp(120px,22vh,240px);max-width:min(700px,calc(100% - 2*var(--g)));text-align:right}
   .end h2{margin:0;font-size:clamp(40px,5.6vw,92px);line-height:.9;letter-spacing:-.045em}
   .end p{margin:16px 0 22px;font-size:clamp(17px,1.4vw,20px);line-height:1.45;color:var(--soft)}
   .end a{display:inline-block;padding:15px 22px;border-radius:3px;background:var(--ink);color:var(--paper);text-decoration:none;font-weight:600}
@@ -90,25 +89,17 @@
   .mode a[aria-current]{background:var(--ink);color:var(--paper)}
 
   @media (max-width:760px){
-    .stage video{object-position:68% 50%}
     .hero{top:max(40px,env(safe-area-inset-top));transform:none;max-width:none;right:var(--g)}
-    .projects{top:14vh;align-content:center;grid-template-columns:1fr;gap:16px;overflow:auto}
+    .projects{top:18vh;align-content:center;grid-template-columns:1fr;gap:16px;overflow:auto}
     .info .desc{font-size:16px}
-    .end{left:var(--g);text-align:left;top:24px}
+    .end{left:var(--g);text-align:left;top:20vh}
     .rail{display:none}
   }
   @media (prefers-reduced-motion:reduce){.cue::after{animation:none}.screen.leaving{animation-duration:.01s}}
 </style>
 </head>
-<body>
-<div class="stage" id="stage" aria-hidden="true"><div class="film">
-  <video id="f0" src="clips/v1-sweep.mp4" muted playsinline preload="auto" poster="clips/poster.jpg" class="on"></video>
-  <video id="f1" src="clips/v2-drain.mp4" muted playsinline preload="auto"></video>
-  <video id="f2" src="clips/v3-tide.mp4" muted playsinline preload="auto"></video>
-  <video id="r0" src="clips/v1-sweep-rev.mp4" muted playsinline preload="auto"></video>
-  <video id="r1" src="clips/v2-drain-rev.mp4" muted playsinline preload="auto"></video>
-  <video id="r2" src="clips/v3-tide-rev.mp4" muted playsinline preload="auto"></video>
-</div></div>
+<body data-at="0">
+<div class="stage" aria-hidden="true"><canvas id="gl"></canvas></div>
 
 <main>
   <section class="screen on" data-i="0" aria-label="Start">
@@ -156,7 +147,7 @@
   </section>
 </main>
 
-<nav class="mode" aria-label="Wersja animacji"><a href="./" aria-current="page">Film</a><a href="../3d/" id="other">3D</a></nav>
+<nav class="mode" aria-label="Wersja animacji"><a href="../video/" id="other">Film</a><a href="./" aria-current="page">3D v1</a></nav>
 
 <nav class="rail" aria-label="Sekcje">
   <button data-go="0" aria-current="true"><span>Start</span></button>
@@ -165,81 +156,190 @@
   <button data-go="3"><span>Kontakt</span></button>
 </nav>
 
+<script id="fs" type="x-shader/x-fragment">
+precision highp float;
+uniform vec2 uRes; uniform float uTime; uniform float uS;
+
+/* --- Command Centre chrome (noise + height field, unchanged) --- */
+vec2 hash(vec2 p){ p=vec2(dot(p,vec2(127.1,311.7)),dot(p,vec2(269.5,183.3))); return -1.0+2.0*fract(sin(p)*43758.5453123); }
+float noise(vec2 p){ vec2 i=floor(p); vec2 f=fract(p); vec2 u=f*f*(3.0-2.0*f);
+  return mix(mix(dot(hash(i),f),dot(hash(i+vec2(1.0,0.0)),f-vec2(1.0,0.0)),u.x),
+             mix(dot(hash(i+vec2(0.0,1.0)),f-vec2(0.0,1.0)),dot(hash(i+vec2(1.0,1.0)),f-vec2(1.0,1.0)),u.x),u.y); }
+float fbmMacro(vec2 p){ float v=0.0,a=0.5; mat2 r=mat2(0.8,0.6,-0.6,0.8);
+  for(int i=0;i<4;i++){ v+=a*noise(p); p=r*p*1.9; a*=0.52; } return v; }
+float heightMacro(vec2 p,float t){ vec2 q=vec2(fbmMacro(p+t*0.035),fbmMacro(p+vec2(5.2,1.3)+t*0.028));
+  vec2 r=vec2(fbmMacro(p+2.6*q+vec2(1.7,9.2)-t*0.02),fbmMacro(p+2.6*q+vec2(8.3,2.8)+t*0.016));
+  return fbmMacro(p+2.6*r+t*0.009); }
+
+/* --- liquid shape: signed distance, negative inside --- */
+float smin(float a,float b,float k){ float h=clamp(0.5+0.5*(b-a)/k,0.0,1.0); return mix(b,a,h)-k*h*(1.0-h); }
+float ease(float x){ x=clamp(x,0.0,1.0); return x*x*(3.0-2.0*x); }
+float capsule(vec2 p,vec2 a,vec2 b,float r){ vec2 pa=p-a,ba=b-a; float h=clamp(dot(pa,ba)/dot(ba,ba),0.0,1.0); return length(pa-ba*h)-r; }
+
+/* the drip band hanging from the top; k = how far the sheet has drained (0..1), pour = 0..1 */
+float band(vec2 p,float asp,float k,float pour,float t){
+  float L=mix(-0.2,0.972,ease(k));
+  float d=L-p.y+0.010*sin(p.x*7.0+t*0.8)+0.006*sin(p.x*17.0-t*1.1);
+  float grow=ease((k-0.3)/0.7);
+  for(int i=0;i<6;i++){
+    float fi=float(i);
+    float x=asp*(0.08+0.165*fi+0.03*sin(fi*3.7));
+    float len=(0.045+0.085*fract(sin(fi*12.9898)*43758.5))*grow+0.008*sin(t*1.1+fi*2.0)*grow;
+    float r=0.011+0.004*fract(sin(fi*7.13)*917.3);
+    if(i==1){ float s=ease(pour*1.8); len=mix(len,1.15,s); r*=1.0+1.3*s; }
+    else { len*=1.0+0.6*ease(pour); }
+    vec2 top=vec2(x,L+0.01), bot=vec2(x,L-len);
+    d=smin(d,capsule(p,top,bot,r),0.035);
+    d=smin(d,length(p-bot)-r*1.45,0.02);
+  }
+  return d;
+}
+
+float liquid(vec2 p,float asp,float s,float t){
+  if(s<1.0){
+    float e=ease(s);
+    float portrait=step(asp,1.0);
+    vec2 c=vec2(asp*mix(0.68,0.6,portrait),mix(0.48,0.42,portrait));
+    float R=min(0.17,asp*0.28)*(1.0+e*1.6);
+    vec2 o1=0.03*vec2(sin(t*0.7),cos(t*0.9));
+    vec2 o2=vec2(0.15,-0.05)+0.035*vec2(cos(t*0.6),sin(t*0.8));
+    vec2 o3=vec2(-0.13,0.07)+0.03*vec2(sin(t*0.5+1.0),cos(t*0.7));
+    float d=length((p-c-o1)*vec2(1.0,1.2))-R;
+    d=smin(d,length(p-c-o2)-R*0.58,0.14);
+    d=smin(d,length(p-c-o3)-R*0.42,0.12);
+    /* the wave: a front racing left to right, its crest leaning ahead */
+    float fx=mix(-0.6,asp+0.7,e)+0.09*sin(p.y*5.0+t*1.3)+0.22*(p.y-0.35);
+    return smin(d,p.x-fx,0.02+0.3*e);
+  }
+  if(s<2.0) return band(p,asp,s-1.0,0.0,t);
+  float k=s-2.0;
+  float d=band(p,asp,1.0,k,t);
+  /* the pool rising from the bottom where the stream lands */
+  float lvl=mix(-0.3,0.38,ease((k-0.25)/0.75));
+  float sx=asp*(0.08+0.165+0.03*sin(3.7));
+  float pool=p.y-(lvl+0.03*sin(p.x*4.0+t*1.1)+0.10*exp(-pow((p.x-sx)*4.0,2.0))*ease(k*2.0));
+  return smin(d,pool,0.08);
+}
+
+void main(){
+  vec2 res=uRes; float asp=res.x/res.y; float t=uTime;
+  vec2 p=vec2(gl_FragCoord.x/res.y,gl_FragCoord.y/res.y);
+  float d=liquid(p,asp,uS,t);
+  float px=1.6/res.y;
+  float a=smoothstep(px,-px,d);
+
+  vec3 paper=vec3(0.925,0.922,0.902), white=vec3(1.0);
+  vec3 bg=uS<1.5?paper:white;
+  /* soft contact shadow under the metal */
+  float ds=liquid(p+vec2(0.012,0.03),asp,uS,t);
+  bg*=1.0-0.16*(1.0-smoothstep(0.0,0.08,ds))*(1.0-a);
+  if(a<=0.0){ gl_FragColor=vec4(bg,1.0); return; }
+
+  /* chrome, lit like the Command Centre background */
+  vec2 flow=uS<1.0?vec2(-ease(uS)*0.9,0.0):vec2(0.0,(uS<2.0?uS-1.0:1.0)*0.6);
+  vec2 uv=(p-vec2(asp*0.5,0.5))*0.85+flow;
+  vec2 eps=vec2(0.012,0.0);
+  float h=heightMacro(uv,t), hx=heightMacro(uv+eps.xy,t), hy=heightMacro(uv+eps.yx,t);
+  vec2 g=vec2(liquid(p+vec2(0.003,0.0),asp,uS,t)-d,liquid(p+vec2(0.0,0.003),asp,uS,t)-d);
+  /* rounded body: the surface curves down toward every edge, like a drop of mercury */
+  float rim=1.0-clamp(-d/0.13,0.0,1.0);
+  vec2 edgeN=normalize(g+1e-6)*(pow(rim,2.2)*3.2+rim*0.35);
+  vec3 N=normalize(vec3(((h-hx)/eps.x)*0.7+edgeN.x,((h-hy)/eps.x)*0.7+edgeN.y,0.55));
+  vec3 V=normalize(vec3(uv*0.15,1.0)); vec3 R=reflect(-V,N);
+  float envGrad=smoothstep(-0.9,0.9,R.y);
+  float band1=pow(clamp(0.5+0.5*sin(R.x*3.2+R.y*2.1+t*0.05),0.0,1.0),3.0);
+  float band2=pow(clamp(0.5+0.5*cos(R.z*4.5-R.y*2.6),0.0,1.0),4.5);
+  float band3=smoothstep(0.55,0.95,sin(R.y*5.0+R.x*2.2-t*0.04));
+  float env=envGrad*0.20+band1*0.30+band2*0.28+band3*0.60;
+  vec3 L=normalize(vec3(0.45,0.82,0.62)); vec3 Hv=normalize(L+V); float NdotH=max(dot(N,Hv),0.0);
+  float spec=pow(NdotH,60.0)*2.0+pow(NdotH,9.0)*0.45;
+  float fres=pow(1.0-max(dot(N,V),0.0),3.5);
+  float base=0.045+pow(clamp(h*0.5+0.5,0.0,1.0),2.0)*0.10;
+  float b=base+env*(0.30+0.70*fres)+spec;
+  b=pow(clamp(b,0.0,1.0),1.05);
+  b+=(fract(sin(dot(gl_FragCoord.xy,vec2(12.9898,78.233)))*43758.5453)-0.5)*0.018;
+  gl_FragColor=vec4(mix(bg,vec3(clamp(b,0.0,1.0)),a),1.0);
+}
+</script>
 <script src="../projects-data.js?v=4.1" charset="utf-8"></script>
 <script>
 (function(){
-  var RATE = 1.8;                 /* clips are ~4.8s; play them as a fast sweep */
   var LAST = 3;
+  var DUR = [1.15, 1.5, 1.7];     /* seconds: sweep, drain, pour */
   var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var fwd = [0,1,2].map(function(i){return document.getElementById('f'+i)});
-  var rev = [0,1,2].map(function(i){return document.getElementById('r'+i)});
   var screens = [].slice.call(document.querySelectorAll('.screen'));
   var rail = [].slice.call(document.querySelectorAll('.rail button'));
-  var at = 0, busy = false, queue = null, shown = fwd[0];
-  var stage = document.getElementById('stage');
-  /* The drip band's top edge sits at 25% of the clip frame. Lift the film so that edge
-     lands just above the screen top, leaving only the band's underside and drips visible. */
-  function fitLift(){
-    var vw = innerWidth, vh = innerHeight, h = Math.max(vh, vw * 9 / 16), off = (vh - h) / 2;
-    stage.querySelector('.film').style.setProperty('--lift', (-(off + 0.25 * h) - 0.014 * h).toFixed(1) + 'px');
-  }
-  fitLift(); addEventListener('resize', fitLift);
+  var at = 0, busy = false, queue = null, S = 0;
 
-  function seek(v, t){
+  /* --- WebGL --- */
+  var canvas = document.getElementById('gl');
+  var gl = canvas.getContext('webgl', {antialias:false, alpha:false});
+  var uRes, uTime, uS;
+  if (gl) {
+    var vs = 'attribute vec2 p;void main(){gl_Position=vec4(p,0.0,1.0);}';
+    var sh = function(type, src){ var s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+      if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) { console.error(gl.getShaderInfoLog(s)); return null; } return s; };
+    var v = sh(gl.VERTEX_SHADER, vs), f = sh(gl.FRAGMENT_SHADER, document.getElementById('fs').textContent);
+    if (v && f) {
+      var prog = gl.createProgram(); gl.attachShader(prog, v); gl.attachShader(prog, f); gl.linkProgram(prog); gl.useProgram(prog);
+      gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]), gl.STATIC_DRAW);
+      var loc = gl.getAttribLocation(prog, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+      uRes = gl.getUniformLocation(prog, 'uRes'); uTime = gl.getUniformLocation(prog, 'uTime'); uS = gl.getUniformLocation(prog, 'uS');
+    } else gl = null;
+  }
+  if (!gl) document.body.classList.add('nogl');
+
+  function frame(now){
+    if (gl && !document.hidden) {
+      var dpr = Math.min(devicePixelRatio || 1, innerWidth < 760 ? 1.5 : 1.25);
+      var w = Math.floor(canvas.clientWidth * dpr), h = Math.floor(canvas.clientHeight * dpr);
+      if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; gl.viewport(0, 0, w, h); }
+      gl.uniform2f(uRes, w, h); gl.uniform1f(uTime, reduce ? 0 : now * 0.0006); gl.uniform1f(uS, S);
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  /* move S (the liquid's state) from one screen value to the next */
+  function tween(from, to, secs){
     return new Promise(function(res){
-      if (Math.abs(v.currentTime - t) < 0.01 && v.readyState >= 2) return res();
-      v.addEventListener('seeked', function(){ res(); }, {once:true});
-      v.currentTime = t;
+      if (reduce || !gl) { S = to; return res(); }
+      var t0 = performance.now();
+      (function tick(now){
+        var k = Math.min(1, (now - t0) / (secs * 1000));
+        S = from + (to - from) * k;
+        if (k < 1) requestAnimationFrame(tick); else res();
+      })(t0);
     });
   }
-  function ready(v){
-    return v.readyState >= 2 ? Promise.resolve() :
-      new Promise(function(res){ v.addEventListener('loadeddata', res, {once:true}); });
-  }
-  function show(v){ v.classList.add('on'); if (shown && shown !== v) shown.classList.remove('on'); shown = v; }
-  function play(v){
-    return new Promise(function(res){
-      if (reduce) { seek(v, v.duration - 0.05).then(res); return; }
-      v.playbackRate = RATE;
-      v.addEventListener('ended', function(){ res(); }, {once:true});
-      var p = v.play(); if (p && p.catch) p.catch(function(){ seek(v, v.duration - 0.05).then(res); });
-    });
-  }
-  /* The resting frame for each screen: start of its outgoing clip, or the end of the last clip. */
-  function rest(i){
-    if (i < LAST) return ready(fwd[i]).then(function(){ return seek(fwd[i], 0); }).then(function(){ show(fwd[i]); });
-    var v = fwd[LAST-1];
-    return ready(v).then(function(){ return seek(v, v.duration - 0.05); }).then(function(){ show(v); });
-  }
-  function setScreen(i, dir){
+
+  function setScreen(i, dir, secs){
     screens.forEach(function(s, k){
       s.classList.remove('leaving','up');
       if (k === at && k !== i && dir) {
-        s.style.setProperty('--wipe', (reduce ? .01 : 4.8 / RATE * .55) + 's');
+        s.style.setProperty('--wipe', (reduce ? .01 : secs * .55) + 's');
         s.classList.add('leaving'); if (dir < 0) s.classList.add('up');
       }
       if (k === i) s.classList.add('on'); else s.classList.remove('on');
     });
-    rail.forEach(function(b, k){ b.setAttribute('aria-current', k === i ? 'true' : 'false'); });
-    document.body.classList.toggle('dark', i === 1);
-    if (i >= 0) document.getElementById('other').href = '../3d/?s=' + i;
+    if (i >= 0) {
+      rail.forEach(function(b, k){ b.setAttribute('aria-current', k === i ? 'true' : 'false'); });
+      document.body.classList.toggle('dark', i === 1);
+      document.body.setAttribute('data-at', i);
+      document.getElementById('other').href = '../video/?s=' + i;
+    }
   }
 
   function step(dir){
-    var from = at, to = at + dir;
+    var to = at + dir;
     if (to < 0 || to > LAST) return Promise.resolve();
-    var clip = dir > 0 ? fwd[from] : rev[to];
-    setScreen(-1, dir);           /* wipe the current text away with the wave */
-    stage.style.setProperty('--lt', (reduce ? 0 : 4.84 / RATE) + 's');
-    stage.classList.toggle('lift', to === 2);   /* glide in step with the clip */
-    return ready(clip).then(function(){ return seek(clip, 0); })
-      .then(function(){ show(clip); return play(clip); })
-      .then(function(){
-        at = to;
-        /* after the last forward clip, its final frame is the resting frame */
-        if (!(dir > 0 && to === LAST)) return rest(to);
-      })
-      .then(function(){ setScreen(at, 0); screens[at].classList.remove('leaving'); });
+    var secs = DUR[Math.min(at, to)];
+    setScreen(-1, dir, secs);
+    return tween(at, to, secs).then(function(){
+      at = to; setScreen(at, 0); screens[at].classList.remove('leaving');
+    });
   }
   function go(target){
     target = Math.max(0, Math.min(LAST, target));
@@ -299,8 +399,9 @@
 
   /* ?s=N opens on screen N (used by the Film / 3D switch) */
   at = Math.max(0, Math.min(LAST, parseInt(new URLSearchParams(location.search).get('s'), 10) || 0));
-  stage.style.setProperty('--lt', '0s'); stage.classList.toggle('lift', at === 2);
-  setScreen(at, 0); rest(at);
+  S = at; setScreen(at, 0);
+  /* #debug: window.__S(x) freezes the liquid at any point for review */
+  if (location.hash === '#debug') window.__S = function(x){ S = x; };
 })();
 </script>
 </body>
