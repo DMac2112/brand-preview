@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Dominik Machowiak — strony internetowe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#ecebe6; --ink:#17191c; --gunmetal:#2c3135; --mercury:#9aa3a8; --white:#ffffff; --soft:#5b6166;
+    --g:clamp(16px,6vw,96px);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;overflow:hidden;background:var(--paper);color:var(--ink);
+    font-family:"Familjen Grotesk",system-ui,sans-serif;-webkit-font-smoothing:antialiased;overscroll-behavior:none}
+  body{touch-action:none}
+  a{color:inherit}
+  [hidden]{display:none!important}
+  :focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+
+  /* video stage */
+  .stage{position:fixed;inset:0;background:var(--paper)}
+  .stage video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:62% 50%;opacity:0;pointer-events:none}
+  .stage video.on{opacity:1}
+
+  /* screens: text layers above the film */
+  .screen{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:0;transition:opacity .25s}
+  .screen.on{opacity:1;pointer-events:auto}
+  .screen.leaving{opacity:1;animation:wipe var(--wipe,.9s) cubic-bezier(.55,0,.75,.4) forwards}
+  .screen.leaving.up{animation-name:wipeUp}
+  @keyframes wipe{from{clip-path:inset(0 0 0 0)}to{clip-path:inset(0 0 0 100%)}}
+  @keyframes wipeUp{from{clip-path:inset(0 0 0 0)}to{clip-path:inset(0 0 100% 0)}}
+
+  /* 1 landing */
+  .hero{position:absolute;left:var(--g);top:50%;transform:translateY(-50%);max-width:min(44vw,620px)}
+  .hero h1{margin:0;font-weight:700;font-size:clamp(44px,7.4vw,124px);line-height:.88;letter-spacing:-.045em}
+  .hero p{margin:clamp(16px,2.4vw,30px) 0 0;max-width:34ch;font-size:clamp(17px,1.5vw,22px);line-height:1.4;color:var(--soft)}
+  .cue{position:absolute;left:var(--g);bottom:max(24px,env(safe-area-inset-bottom));display:flex;align-items:center;gap:10px;
+    font:inherit;font-size:15px;color:var(--soft);background:none;border:0;padding:6px 0;cursor:pointer}
+  .cue::after{content:"";width:1px;height:28px;background:currentColor;animation:drip 2.2s ease-in-out infinite;transform-origin:top}
+  @keyframes drip{0%{transform:scaleY(.2)}60%{transform:scaleY(1)}100%{transform:scaleY(.2)}}
+
+  /* 2 what I do — opaque sheet on the chrome */
+  .sheet{position:absolute;left:var(--g);bottom:clamp(24px,8vh,96px);width:min(560px,calc(100% - 2*var(--g)));
+    background:var(--paper);padding:clamp(22px,3vw,40px);border-radius:3px}
+  .sheet h2{margin:0 0 14px;font-size:clamp(30px,3.6vw,52px);line-height:1;letter-spacing:-.035em}
+  .sheet ul{margin:0;padding:0;list-style:none}
+  .sheet li{padding:12px 0;border-top:1px solid #17191c22;font-size:clamp(16px,1.35vw,19px);line-height:1.4}
+
+  /* 3 projects — white, under the drip line */
+  .projects{position:absolute;left:var(--g);right:var(--g);top:36vh;bottom:max(20px,env(safe-area-inset-bottom));
+    display:grid;grid-template-columns:minmax(0,1.5fr) minmax(240px,1fr);gap:clamp(20px,3vw,56px);align-items:start}
+  .shot{position:relative;aspect-ratio:16/10;border-radius:4px;overflow:hidden;background:#f1f1ef;box-shadow:0 1px 0 #0000000f,0 18px 40px -24px #2c313580}
+  .shot img{width:100%;height:100%;object-fit:cover;object-position:top;display:block}
+  .shot .name{position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;
+    font-size:clamp(24px,2.6vw,40px);font-weight:700;letter-spacing:-.03em;background:var(--gunmetal);color:var(--paper)}
+  .info h2{margin:0;font-size:clamp(28px,3vw,46px);line-height:1;letter-spacing:-.035em}
+  .info .status{margin:12px 0 0;color:var(--soft);font-size:15px}
+  .info .desc{margin:14px 0 0;font-size:clamp(17px,1.4vw,20px);line-height:1.45;max-width:36ch}
+  .info .visit{display:inline-block;margin-top:18px;font-weight:600;text-underline-offset:4px}
+  .ctrl{display:flex;align-items:center;gap:14px;margin-top:clamp(20px,4vh,40px)}
+  .ctrl button{width:48px;height:48px;border-radius:50%;border:0;cursor:pointer;color:var(--paper);font:600 20px/1 inherit;
+    background:radial-gradient(circle at 34% 28%,#a9b0b5 0,#4a5156 34%,#1c1f22 72%);box-shadow:inset 0 -2px 4px #0006,0 6px 14px -6px #000a}
+  .ctrl span{font-variant-numeric:tabular-nums;color:var(--soft);font-size:15px;min-width:4ch}
+
+  /* 4 end */
+  .end{position:absolute;right:var(--g);top:clamp(28px,12vh,140px);max-width:min(700px,calc(100% - 2*var(--g)));text-align:right}
+  .end h2{margin:0;font-size:clamp(40px,5.6vw,92px);line-height:.9;letter-spacing:-.045em}
+  .end p{margin:16px 0 22px;font-size:clamp(17px,1.4vw,20px);line-height:1.45;color:var(--soft)}
+  .end a{display:inline-block;padding:15px 22px;border-radius:3px;background:var(--ink);color:var(--paper);text-decoration:none;font-weight:600}
+
+  /* where-am-I rail */
+  .rail{position:fixed;z-index:3;right:clamp(10px,2vw,28px);top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:6px}
+  .rail button{display:flex;justify-content:flex-end;align-items:center;gap:8px;padding:6px 0;border:0;background:none;cursor:pointer;font:inherit;font-size:13px;color:var(--soft)}
+  .rail button::after{content:"";width:18px;height:2px;background:currentColor;opacity:.45;transition:width .25s,opacity .25s}
+  .rail button[aria-current="true"]{color:var(--ink)}
+  .rail button[aria-current="true"]::after{width:34px;opacity:1}
+  .rail span{opacity:0;transition:opacity .2s}
+  .rail:hover span,.rail button:focus-visible span{opacity:1}
+  body.dark .rail button{color:#d9dcde}
+
+  @media (max-width:760px){
+    .stage video{object-position:68% 50%}
+    .hero{top:max(40px,env(safe-area-inset-top));transform:none;max-width:none;right:var(--g)}
+    .projects{top:32vh;grid-template-columns:1fr;gap:16px;overflow:auto}
+    .info .desc{font-size:16px}
+    .end{left:var(--g);text-align:left;top:24px}
+    .rail{display:none}
+  }
+  @media (prefers-reduced-motion:reduce){.cue::after{animation:none}.screen.leaving{animation-duration:.01s}}
+</style>
+</head>
+<body>
+<div class="stage" aria-hidden="true">
+  <video id="f0" src="clips/v1-sweep.mp4" muted playsinline preload="auto" poster="clips/poster.jpg" class="on"></video>
+  <video id="f1" src="clips/v2-drain.mp4" muted playsinline preload="auto"></video>
+  <video id="f2" src="clips/v3-tide.mp4" muted playsinline preload="auto"></video>
+  <video id="r0" src="clips/v1-sweep-rev.mp4" muted playsinline preload="auto"></video>
+  <video id="r1" src="clips/v2-drain-rev.mp4" muted playsinline preload="auto"></video>
+  <video id="r2" src="clips/v3-tide-rev.mp4" muted playsinline preload="auto"></video>
+</div>
+
+<main>
+  <section class="screen on" data-i="0" aria-label="Start">
+    <div class="hero">
+      <h1>Dominik Machowiak</h1>
+      <p>Robię strony internetowe dla małych firm z Kalisza i okolic. Proste, szybkie, zrozumiałe dla Twoich klientów.</p>
+    </div>
+    <button class="cue" data-go="1">Przewiń w dół</button>
+  </section>
+
+  <section class="screen" data-i="1" aria-label="Co robię">
+    <div class="sheet">
+      <h2>Co robię</h2>
+      <ul>
+        <li>Projektuję stronę pod Twoich klientów: co chcą sprawdzić i jak mają się z Tobą skontaktować.</li>
+        <li>Piszę teksty prostym językiem, bez branżowego żargonu.</li>
+        <li>Wdrażam stronę i sprawdzam, czy działa na telefonie.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="screen" data-i="2" aria-label="Projekty">
+    <div class="projects">
+      <div class="shot" id="shot"></div>
+      <div class="info">
+        <h2 id="pLabel"></h2>
+        <p class="status" id="pStatus"></p>
+        <p class="desc" id="pDesc"></p>
+        <a class="visit" id="pLink" target="_blank" rel="noopener" hidden>Zobacz stronę</a>
+        <div class="ctrl">
+          <button id="prev" aria-label="Poprzedni projekt">‹</button>
+          <button id="next" aria-label="Następny projekt">›</button>
+          <span id="pCount" aria-live="polite"></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="screen" data-i="3" aria-label="Kontakt">
+    <div class="end">
+      <h2>Porozmawiajmy</h2>
+      <p>Napisz, czego potrzebuje Twoja firma.</p>
+      <a href="../#kontakt">Napisz do mnie</a>
+    </div>
+  </section>
+</main>
+
+<nav class="rail" aria-label="Sekcje">
+  <button data-go="0" aria-current="true"><span>Start</span></button>
+  <button data-go="1"><span>Co robię</span></button>
+  <button data-go="2"><span>Projekty</span></button>
+  <button data-go="3"><span>Kontakt</span></button>
+</nav>
+
+<script src="../projects-data.js?v=4.1" charset="utf-8"></script>
+<script>
+(function(){
+  var RATE = 1.8;                 /* clips are ~4.8s; play them as a fast sweep */
+  var LAST = 3;
+  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var fwd = [0,1,2].map(function(i){return document.getElementById('f'+i)});
+  var rev = [0,1,2].map(function(i){return document.getElementById('r'+i)});
+  var screens = [].slice.call(document.querySelectorAll('.screen'));
+  var rail = [].slice.call(document.querySelectorAll('.rail button'));
+  var at = 0, busy = false, queue = null, shown = fwd[0];
+
+  function seek(v, t){
+    return new Promise(function(res){
+      if (Math.abs(v.currentTime - t) < 0.01 && v.readyState >= 2) return res();
+      v.addEventListener('seeked', function(){ res(); }, {once:true});
+      v.currentTime = t;
+    });
+  }
+  function ready(v){
+    return v.readyState >= 2 ? Promise.resolve() :
+      new Promise(function(res){ v.addEventListener('loadeddata', res, {once:true}); });
+  }
+  function show(v){ v.classList.add('on'); if (shown && shown !== v) shown.classList.remove('on'); shown = v; }
+  function play(v){
+    return new Promise(function(res){
+      if (reduce) { seek(v, v.duration - 0.05).then(res); return; }
+      v.playbackRate = RATE;
+      v.addEventListener('ended', function(){ res(); }, {once:true});
+      var p = v.play(); if (p && p.catch) p.catch(function(){ seek(v, v.duration - 0.05).then(res); });
+    });
+  }
+  /* The resting frame for each screen: start of its outgoing clip, or the end of the last clip. */
+  function rest(i){
+    if (i < LAST) return ready(fwd[i]).then(function(){ return seek(fwd[i], 0); }).then(function(){ show(fwd[i]); });
+    var v = fwd[LAST-1];
+    return ready(v).then(function(){ return seek(v, v.duration - 0.05); }).then(function(){ show(v); });
+  }
+  function setScreen(i, dir){
+    screens.forEach(function(s, k){
+      s.classList.remove('leaving','up');
+      if (k === at && k !== i && dir) {
+        s.style.setProperty('--wipe', (reduce ? .01 : 4.8 / RATE * .55) + 's');
+        s.classList.add('leaving'); if (dir < 0) s.classList.add('up');
+      }
+      if (k === i) s.classList.add('on'); else s.classList.remove('on');
+    });
+    rail.forEach(function(b, k){ b.setAttribute('aria-current', k === i ? 'true' : 'false'); });
+    document.body.classList.toggle('dark', i === 1);
+  }
+
+  function step(dir){
+    var from = at, to = at + dir;
+    if (to < 0 || to > LAST) return Promise.resolve();
+    var clip = dir > 0 ? fwd[from] : rev[to];
+    setScreen(-1, dir);           /* wipe the current text away with the wave */
+    return ready(clip).then(function(){ return seek(clip, 0); })
+      .then(function(){ show(clip); return play(clip); })
+      .then(function(){
+        at = to;
+        /* after the last forward clip, its final frame is the resting frame */
+        if (!(dir > 0 && to === LAST)) return rest(to);
+      })
+      .then(function(){ setScreen(at, 0); screens[at].classList.remove('leaving'); });
+  }
+  function go(target){
+    target = Math.max(0, Math.min(LAST, target));
+    if (busy) { queue = target; return; }
+    if (target === at) return;
+    busy = true;
+    step(target > at ? 1 : -1).then(function(){
+      busy = false;
+      var next = queue !== null ? queue : target; queue = null;
+      if (next !== at) go(next);
+    });
+  }
+
+  /* input: wheel, touch, keys, buttons */
+  var lastWheel = 0;
+  addEventListener('wheel', function(e){
+    e.preventDefault();
+    var now = performance.now();
+    if (busy || now - lastWheel < 700 || Math.abs(e.deltaY) < 12) { lastWheel = Math.max(lastWheel, busy ? now : lastWheel); return; }
+    lastWheel = now; go(at + (e.deltaY > 0 ? 1 : -1));
+  }, {passive:false});
+  var tx = 0, ty = 0;
+  addEventListener('touchstart', function(e){ tx = e.touches[0].clientX; ty = e.touches[0].clientY; }, {passive:true});
+  addEventListener('touchend', function(e){
+    var dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty;
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40 && at === 2) { slide(dx < 0 ? 1 : -1); return; }
+    if (Math.abs(dy) > 50) go(at + (dy < 0 ? 1 : -1));
+  }, {passive:true});
+  addEventListener('keydown', function(e){
+    if (['ArrowDown','PageDown',' '].indexOf(e.key) > -1) { e.preventDefault(); go(at + 1); }
+    else if (['ArrowUp','PageUp'].indexOf(e.key) > -1) { e.preventDefault(); go(at - 1); }
+    else if (at === 2 && e.key === 'ArrowRight') slide(1);
+    else if (at === 2 && e.key === 'ArrowLeft') slide(-1);
+  });
+  document.addEventListener('click', function(e){
+    var b = e.target.closest('[data-go]'); if (b) go(+b.getAttribute('data-go'));
+  });
+
+  /* projects carousel */
+  var P = (window.PROTO_PROJECTS || []), pi = 0;
+  var shot = document.getElementById('shot');
+  function render(){
+    var p = P[pi]; if (!p) return;
+    shot.innerHTML = '';
+    if (p.image) { var img = new Image(); img.src = '../' + p.image; img.alt = p.label; shot.appendChild(img); }
+    else { var n = document.createElement('div'); n.className = 'name'; n.textContent = p.label; shot.appendChild(n); }
+    document.getElementById('pLabel').textContent = p.label;
+    document.getElementById('pStatus').textContent = p.status;
+    document.getElementById('pDesc').textContent = p.description;
+    var a = document.getElementById('pLink'); a.hidden = !p.url; if (p.url) a.href = p.url;
+    document.getElementById('pCount').textContent = (pi + 1) + ' / ' + P.length;
+  }
+  function slide(d){ if (!P.length) return; pi = (pi + d + P.length) % P.length; render(); }
+  document.getElementById('prev').onclick = function(){ slide(-1); };
+  document.getElementById('next').onclick = function(){ slide(1); };
+  render();
+
+  rest(0);
+})();
+</script>
+</body>
+</html>
