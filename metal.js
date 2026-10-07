@@ -172,12 +172,12 @@
       FRAG_COLOR=vec4(shade*cover,cover);
       return;
     }
-    float edge=0.0,alpha=1.0,shadow=0.0,heightField=0.0,chromeMask=0.0,innerLip=0.0;
+    float edge=0.0,alpha=1.0,shadow=0.0,heightField=0.0,chromeMask=0.0,innerLip=0.0,flatten=0.0;
     vec2 chromeSlope=vec2(0.0);
     vec2 uv=v_uv;
     if(u_mode<1.5){
       float m=(u_mode>0.5)?0.0:u_morph;
-      float flatten=smoothstep(0.0,0.48,m);
+      flatten=smoothstep(0.0,0.48,m);
       vec2 centre=vec2(0.0,mix(-0.015,0.0,flatten));
       vec2 halfSize=mix(vec2(0.42*aspect,0.39),u_outer,flatten);
       if(u_mode>0.5){centre=vec2(0.0);halfSize=vec2(0.37,0.37);}
