@@ -1,0 +1,9 @@
+Paper Shaders
+Copyright 2026 Paper
+
+Powered by Paper Shaders:
+https://shaders.paper.design
+
+The liquid-metal band, noise, tint, edge and dispersion logic in metal.js is
+adapted from @paper-design/shaders 0.0.81 under Apache License 2.0.
+The license text is in ../vendor/package/LICENSE.
