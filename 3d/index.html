@@ -147,7 +147,7 @@
   </section>
 </main>
 
-<nav class="mode" aria-label="Wersja animacji"><a href="../video/" id="other">Film</a><a href="./" aria-current="page">3D v1</a></nav>
+<nav class="mode" aria-label="Wersja animacji"><a href="../video/" data-v="video">Film 1</a><a href="../3d/" data-v="3d" aria-current="page">3D 1</a><a href="../3d-2/" data-v="3d-2">3D 2</a><a href="../video-2/" data-v="video-2">Film 2</a></nav>
 
 <nav class="rail" aria-label="Sekcje">
   <button data-go="0" aria-current="true"><span>Start</span></button>
@@ -328,7 +328,7 @@ void main(){
       rail.forEach(function(b, k){ b.setAttribute('aria-current', k === i ? 'true' : 'false'); });
       document.body.classList.toggle('dark', i === 1);
       document.body.setAttribute('data-at', i);
-      document.getElementById('other').href = '../video/?s=' + i;
+      [].forEach.call(document.querySelectorAll('.mode a'), function(a){ a.href = '../' + a.getAttribute('data-v') + '/?s=' + i; });
     }
   }
 

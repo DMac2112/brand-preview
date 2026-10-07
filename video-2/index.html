@@ -102,12 +102,12 @@
 </head>
 <body>
 <div class="stage" id="stage" aria-hidden="true"><div class="film">
-  <video id="f0" src="clips/v1-sweep.mp4" muted playsinline preload="auto" poster="clips/poster.jpg" class="on"></video>
-  <video id="f1" src="clips/v2-drain.mp4" muted playsinline preload="auto"></video>
-  <video id="f2" src="clips/v3-tide.mp4" muted playsinline preload="auto"></video>
-  <video id="r0" src="clips/v1-sweep-rev.mp4" muted playsinline preload="auto"></video>
-  <video id="r1" src="clips/v2-drain-rev.mp4" muted playsinline preload="auto"></video>
-  <video id="r2" src="clips/v3-tide-rev.mp4" muted playsinline preload="auto"></video>
+  <video id="f0" src="clips/v1-splash.mp4" muted playsinline preload="auto" poster="clips/poster.jpg" class="on"></video>
+  <video id="f1" src="clips/v2-bead.mp4" muted playsinline preload="auto"></video>
+  <video id="f2" src="clips/v3-pour.mp4" muted playsinline preload="auto"></video>
+  <video id="r0" src="clips/v1-splash-rev.mp4" muted playsinline preload="auto"></video>
+  <video id="r1" src="clips/v2-bead-rev.mp4" muted playsinline preload="auto"></video>
+  <video id="r2" src="clips/v3-pour-rev.mp4" muted playsinline preload="auto"></video>
 </div></div>
 
 <main>
@@ -156,7 +156,7 @@
   </section>
 </main>
 
-<nav class="mode" aria-label="Wersja animacji"><a href="../video/" data-v="video" aria-current="page">Film 1</a><a href="../3d/" data-v="3d">3D 1</a><a href="../3d-2/" data-v="3d-2">3D 2</a><a href="../video-2/" data-v="video-2">Film 2</a></nav>
+<nav class="mode" aria-label="Wersja animacji"><a href="../video/" data-v="video">Film 1</a><a href="../3d/" data-v="3d">3D 1</a><a href="../3d-2/" data-v="3d-2">3D 2</a><a href="../video-2/" data-v="video-2" aria-current="page">Film 2</a></nav>
 
 <nav class="rail" aria-label="Sekcje">
   <button data-go="0" aria-current="true"><span>Start</span></button>
@@ -175,7 +175,7 @@
   var rev = [0,1,2].map(function(i){return document.getElementById('r'+i)});
   var screens = [].slice.call(document.querySelectorAll('.screen'));
   var rail = [].slice.call(document.querySelectorAll('.rail button'));
-  var at = 0, busy = false, queue = null, shown = fwd[0];
+  var at = 0, busy = false, queue = null, shown = fwd[0], clipSecs = 4.84;
   var stage = document.getElementById('stage');
   /* The drip band's top edge sits at 25% of the clip frame. Lift the film so that edge
      lands just above the screen top, leaving only the band's underside and drips visible. */
@@ -215,7 +215,7 @@
     screens.forEach(function(s, k){
       s.classList.remove('leaving','up');
       if (k === at && k !== i && dir) {
-        s.style.setProperty('--wipe', (reduce ? .01 : 4.8 / RATE * .55) + 's');
+        s.style.setProperty('--wipe', (reduce ? .01 : clipSecs / RATE * .55) + 's');
         s.classList.add('leaving'); if (dir < 0) s.classList.add('up');
       }
       if (k === i) s.classList.add('on'); else s.classList.remove('on');
@@ -229,8 +229,9 @@
     var from = at, to = at + dir;
     if (to < 0 || to > LAST) return Promise.resolve();
     var clip = dir > 0 ? fwd[from] : rev[to];
+    clipSecs = clip.duration || 4.84;   /* the splash clip is trimmed shorter than the others */
     setScreen(-1, dir);           /* wipe the current text away with the wave */
-    stage.style.setProperty('--lt', (reduce ? 0 : 4.84 / RATE) + 's');
+    stage.style.setProperty('--lt', (reduce ? 0 : clipSecs / RATE) + 's');
     stage.classList.toggle('lift', to === 2);   /* glide in step with the clip */
     return ready(clip).then(function(){ return seek(clip, 0); })
       .then(function(){ show(clip); return play(clip); })
