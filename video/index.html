@@ -21,7 +21,10 @@
   :focus-visible{outline:2px solid var(--ink);outline-offset:3px}
 
   /* video stage */
-  .stage{position:fixed;inset:0;background:var(--paper)}
+  .stage{position:fixed;inset:0;background:#fff;overflow:hidden}
+  .film{position:absolute;inset:0;--lift:-21%;transition:transform var(--lt,2.7s) cubic-bezier(.65,0,.35,1)}
+  /* projects screen: pull the drip line up to the top edge so it just hangs into the page */
+  .stage.lift .film{transform:translateY(var(--lift))}
   .stage video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:62% 50%;opacity:0;pointer-events:none}
   .stage video.on{opacity:1}
 
@@ -50,8 +53,8 @@
   .sheet li{padding:12px 0;border-top:1px solid #17191c22;font-size:clamp(16px,1.35vw,19px);line-height:1.4}
 
   /* 3 projects — white, under the drip line */
-  .projects{position:absolute;left:var(--g);right:var(--g);top:36vh;bottom:max(20px,env(safe-area-inset-bottom));
-    display:grid;grid-template-columns:minmax(0,1.5fr) minmax(240px,1fr);gap:clamp(20px,3vw,56px);align-items:start}
+  .projects{position:absolute;left:var(--g);right:var(--g);top:16vh;bottom:max(24px,6vh);margin:0 auto;max-width:1320px;
+    display:grid;grid-template-columns:minmax(0,1.5fr) minmax(240px,1fr);gap:clamp(20px,3vw,56px);align-items:center;align-content:center}
   .shot{position:relative;aspect-ratio:16/10;border-radius:4px;overflow:hidden;background:#f1f1ef;box-shadow:0 1px 0 #0000000f,0 18px 40px -24px #2c313580}
   .shot img{width:100%;height:100%;object-fit:cover;object-position:top;display:block}
   .shot .name{position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;
@@ -84,7 +87,8 @@
   @media (max-width:760px){
     .stage video{object-position:68% 50%}
     .hero{top:max(40px,env(safe-area-inset-top));transform:none;max-width:none;right:var(--g)}
-    .projects{top:32vh;grid-template-columns:1fr;gap:16px;overflow:auto}
+    .film{--lift:-23%}
+    .projects{top:14vh;align-content:center;grid-template-columns:1fr;gap:16px;overflow:auto}
     .info .desc{font-size:16px}
     .end{left:var(--g);text-align:left;top:24px}
     .rail{display:none}
@@ -93,14 +97,14 @@
 </style>
 </head>
 <body>
-<div class="stage" aria-hidden="true">
+<div class="stage" id="stage" aria-hidden="true"><div class="film">
   <video id="f0" src="clips/v1-sweep.mp4" muted playsinline preload="auto" poster="clips/poster.jpg" class="on"></video>
   <video id="f1" src="clips/v2-drain.mp4" muted playsinline preload="auto"></video>
   <video id="f2" src="clips/v3-tide.mp4" muted playsinline preload="auto"></video>
   <video id="r0" src="clips/v1-sweep-rev.mp4" muted playsinline preload="auto"></video>
   <video id="r1" src="clips/v2-drain-rev.mp4" muted playsinline preload="auto"></video>
   <video id="r2" src="clips/v3-tide-rev.mp4" muted playsinline preload="auto"></video>
-</div>
+</div></div>
 
 <main>
   <section class="screen on" data-i="0" aria-label="Start">
@@ -166,6 +170,7 @@
   var screens = [].slice.call(document.querySelectorAll('.screen'));
   var rail = [].slice.call(document.querySelectorAll('.rail button'));
   var at = 0, busy = false, queue = null, shown = fwd[0];
+  var stage = document.getElementById('stage');
 
   function seek(v, t){
     return new Promise(function(res){
@@ -211,6 +216,8 @@
     if (to < 0 || to > LAST) return Promise.resolve();
     var clip = dir > 0 ? fwd[from] : rev[to];
     setScreen(-1, dir);           /* wipe the current text away with the wave */
+    stage.style.setProperty('--lt', (reduce ? 0 : 4.84 / RATE) + 's');
+    stage.classList.toggle('lift', to === 2);   /* glide in step with the clip */
     return ready(clip).then(function(){ return seek(clip, 0); })
       .then(function(){ show(clip); return play(clip); })
       .then(function(){
