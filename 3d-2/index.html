@@ -386,13 +386,21 @@ void main(){
     if (busy || now - lastWheel < 700 || Math.abs(e.deltaY) < 12) { lastWheel = Math.max(lastWheel, busy ? now : lastWheel); return; }
     lastWheel = now; go(at + (e.deltaY > 0 ? 1 : -1));
   }, {passive:false});
-  var tx = 0, ty = 0;
-  addEventListener('touchstart', function(e){ tx = e.touches[0].clientX; ty = e.touches[0].clientY; }, {passive:true});
-  addEventListener('touchend', function(e){
-    var dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty;
+  /* touch: own the whole gesture, or iOS turns it into a page pan and cancels touchend */
+  var tx = 0, ty = 0, lx = 0, ly = 0, touching = false;
+  addEventListener('touchstart', function(e){ touching = true; tx = lx = e.touches[0].clientX; ty = ly = e.touches[0].clientY; }, {passive:true});
+  addEventListener('touchmove', function(e){
+    lx = e.touches[0].clientX; ly = e.touches[0].clientY;
+    if (e.cancelable) e.preventDefault();
+  }, {passive:false});
+  function swipe(){
+    if (!touching) return; touching = false;
+    var dx = lx - tx, dy = ly - ty;
     if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40 && at === 2) { slide(dx < 0 ? 1 : -1); return; }
-    if (Math.abs(dy) > 50) go(at + (dy < 0 ? 1 : -1));
-  }, {passive:true});
+    if (Math.abs(dy) > 40) go(at + (dy < 0 ? 1 : -1));
+  }
+  addEventListener('touchend', function(e){ var c = e.changedTouches[0]; if (c) { lx = c.clientX; ly = c.clientY; } swipe(); }, {passive:true});
+  addEventListener('touchcancel', swipe, {passive:true});
   addEventListener('keydown', function(e){
     if (['ArrowDown','PageDown',' '].indexOf(e.key) > -1) { e.preventDefault(); go(at + 1); }
     else if (['ArrowUp','PageUp'].indexOf(e.key) > -1) { e.preventDefault(); go(at - 1); }
