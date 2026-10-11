@@ -39,13 +39,12 @@ body nav.mode{max-width:none}
 .content{min-width:0;padding:0 clamp(26px,5.2vw,96px) 0 clamp(26px,5.2vw,96px)}
 .visual{position:relative;min-width:0}
 .chrome-panel{position:sticky;top:0;height:100svh;min-height:500px;padding-top:48px;display:grid;place-items:center;overflow:hidden;background:var(--paper)}
-.chrome-panel canvas{display:block;width:100%;height:100%}
-.vessel-fallback{position:absolute;left:50%;top:10%;width:min(30%,170px);height:84%;transform:translateX(-50%);border:1.5px solid #B8BEC5;border-radius:999px;overflow:hidden;display:none}
+.chrome-panel canvas{position:relative;z-index:1;display:block;width:100%;height:100%;background:var(--paper);opacity:0;transition:opacity .4s}.chrome-panel canvas.is-ready{opacity:1}
+.vessel-fallback{position:absolute;left:50%;top:10%;width:min(30%,170px);height:84%;transform:translateX(-50%);border:1.5px solid #B8BEC5;border-radius:999px;overflow:hidden;display:block}
 .vessel-fallback::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,#9ba5af18 44%,transparent 60%)}
 .vessel-fallback .fill{position:absolute;inset:0;transform:scaleY(var(--fill,.08));transform-origin:bottom;background:var(--metal);border-radius:inherit}
 .nogl .chrome-panel canvas{display:none}
 .nogl .vessel-fallback{display:block}
-.mobile-vessel{display:none}
 .hero-vessel{display:none}
 section{scroll-margin-top:115px}
 .hero{min-height:100svh;display:flex;flex-direction:column;justify-content:center;padding-top:115px;padding-bottom:64px}
@@ -109,10 +108,8 @@ h1{max-width:12ch;margin-bottom:30px;font-size:clamp(46px,5.1vw,84px);line-heigh
   .layout{display:block}
   .content{padding:0 16px}
   .visual{display:none}
-  .mobile-vessel{position:fixed;z-index:10;display:block;top:88px;right:0;bottom:0;width:4px;background:#DDE1E6;overflow:hidden;pointer-events:none}
-  .mobile-vessel::before{content:"";position:absolute;inset:0;background:var(--metal);transform:scaleY(var(--fill,0));transform-origin:bottom}
-  .hero-vessel{display:block;position:relative;flex:none;width:100%;height:56px;margin-top:32px;border:1.5px solid #B8BEC5;border-radius:999px;overflow:hidden;background:var(--paper)}
-  .hero-vessel::before{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(90deg,#f4f6f8 0%,#9aa1a9 28%,#2a2e33 43%,#2a2e33 45%,#e9edf1 59%,#6c737b 100%);transform:scaleX(var(--fill,0));transform-origin:left}
+  .hero-vessel{display:block;position:sticky;z-index:10;top:88px;width:100%;height:10px;border:1px solid #B8BEC5;border-radius:999px;overflow:hidden;background:#E6E9ED;pointer-events:none}
+  .hero-vessel .fill{display:block;width:100%;height:100%;border-radius:inherit;background:linear-gradient(90deg,#f4f6f8 0%,#9aa1a9 28%,#2a2e33 43%,#2a2e33 45%,#e9edf1 59%,#6c737b 100%);transform:scaleX(var(--fill,0));transform-origin:left}
   section{scroll-margin-top:88px}
   .hero{min-height:0;padding-top:120px;padding-bottom:58px;padding-right:18px}
   h1{font-size:clamp(43px,10.7vw,68px);margin-bottom:28px}
@@ -141,15 +138,14 @@ h1{max-width:12ch;margin-bottom:30px;font-size:clamp(46px,5.1vw,84px);line-heigh
   </nav>
 </header>
 <nav class="mode" aria-label="Wersja"></nav>
-<div class="mobile-vessel" aria-hidden="true"></div>
 <main class="layout">
   <div class="content">
     <section class="hero" id="start" aria-label="Wprowadzenie">
       <h1>Strony internetowe i automatyzacje dla małych firm.</h1>
       <p class="sub">Robię strony, które klienci rozumieją, i ustawiam rzeczy, które mogą dziać się same. Żebyś miał więcej czasu na swoją pracę.</p>
       <p class="cue">Zobacz, jak może wyglądać Twój dzień.</p>
-      <div class="hero-vessel" aria-hidden="true"></div>
     </section>
+    <div class="hero-vessel" aria-hidden="true"><div class="fill"></div></div>
     <section class="day" id="day" aria-labelledby="day-title">
       <h2 id="day-title">Twój dzień</h2>
       <article class="day-entry">
@@ -320,7 +316,7 @@ void main(){
     entries.forEach(function(entry){observer.observe(entry);});
   }
 
-  var gl=null,program=null,uRes=null,uTime=null,uLevel=null,uSlosh=null,uDark=null;
+  var gl=null,program=null,uRes=null,uTime=null,uLevel=null,uSlosh=null,uDark=null,firstFrame=false;
   function shader(type,source){var s=gl.createShader(type);gl.shaderSource(s,source);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)){console.error('V11 shader compile:',gl.getShaderInfoLog(s));gl.deleteShader(s);return null;}return s;}
   if(!mobile.matches){
     try{gl=canvas.getContext('webgl',{antialias:false,alpha:false,powerPreference:'high-performance',desynchronized:true});}catch(e){gl=null;}
@@ -337,7 +333,7 @@ void main(){
   var visible=true,visualStart=0,visualEnd=0,cssW=0,cssH=0,cap=1,scale=1,avg=16.7,slow=0,fast=0;
   var scrollPos=window.scrollY,viewport=innerHeight,anchors=[],sectionY=[],target=0,level=0,slosh=0,lastTarget=0,lastFrame=0,navLock=null,jumpToken=0,activeIndex=-1;
   var navScroller=document.querySelector('.section-nav'),indexToggle=document.querySelector('.index-toggle');
-  var fallback=document.querySelector('.vessel-fallback'),strip=document.querySelector('.mobile-vessel'),heroVessel=document.querySelector('.hero-vessel');
+  var fallback=document.querySelector('.vessel-fallback'),heroVessel=document.querySelector('.hero-vessel');
   function closeIndex(){navScroller.classList.remove('open');indexToggle.setAttribute('aria-expanded','false');}
   indexToggle.addEventListener('click',function(){var open=navScroller.classList.toggle('open');indexToggle.setAttribute('aria-expanded',String(open));});
   document.addEventListener('click',function(e){if(!e.target.closest('.site-head'))closeIndex();});
@@ -353,14 +349,14 @@ void main(){
     syncTarget();if(reduce){level=target;slosh=0;paintFill();render();}
   }
   function progress(y){for(var i=1;i<anchors.length;i++){if(y<anchors[i].y){var a=anchors[i-1],b=anchors[i];return Math.max(0,Math.min(1,a.v+(b.v-a.v)*(y-a.y)/Math.max(1,b.y-a.y)));}}return 1;}
-  function paintFill(){fallback.style.setProperty('--fill',0.08+0.92*level);strip.style.setProperty('--fill',level);heroVessel.style.setProperty('--fill',level);}
+  function paintFill(){fallback.style.setProperty('--fill',0.08+0.92*level);heroVessel.style.setProperty('--fill',target);}
   function syncTarget(){target=progress(scrollPos+viewport*0.5);if(gl&&!('IntersectionObserver' in window))visible=scrollPos+viewport>visualStart&&scrollPos<visualEnd;if(reduce){level=target;paintFill();render();}if(navLock===null)activeFromScroll();}
   function active(index){
     if(index===activeIndex)return;activeIndex=index;
     nav.forEach(function(b,i){b.setAttribute('aria-current',i===index?'true':'false');});
   }
   function activeFromScroll(){var probe=scrollPos+viewport*0.4,index=0;for(var i=1;i<sectionY.length;i++)if(probe>=sectionY[i])index=i;active(index);}
-  function render(now){if(!gl||mobile.matches||document.hidden||!visible||!canvas.width)return;gl.useProgram(program);gl.uniform2f(uRes,canvas.width,canvas.height);gl.uniform1f(uTime,reduce?0:(now||performance.now())*0.00048);gl.uniform1f(uLevel,level);gl.uniform1f(uSlosh,reduce?0:slosh);gl.uniform1f(uDark,dark?1:0);gl.drawArrays(gl.TRIANGLES,0,6);}
+  function render(now){if(!gl||mobile.matches||document.hidden||!visible||!canvas.width)return;gl.useProgram(program);gl.uniform2f(uRes,canvas.width,canvas.height);gl.uniform1f(uTime,reduce?0:(now||performance.now())*0.00048);gl.uniform1f(uLevel,level);gl.uniform1f(uSlosh,reduce?0:slosh);gl.uniform1f(uDark,dark?1:0);gl.clearColor(dark?14/255:244/255,dark?16/255:246/255,dark?18/255:248/255,1);gl.clear(gl.COLOR_BUFFER_BIT);gl.drawArrays(gl.TRIANGLES,0,6);if(!firstFrame){firstFrame=true;canvas.classList.add('is-ready');}}
   if(gl&&'IntersectionObserver' in window)new IntersectionObserver(function(items){visible=items[0].isIntersecting;if(visible&&reduce)render();},{threshold:0}).observe(canvas);
   window.addEventListener('resize',measure,{passive:true});
   window.addEventListener('scroll',function(){scrollPos=window.scrollY;syncTarget();},{passive:true});
