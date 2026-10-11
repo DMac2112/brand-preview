@@ -73,6 +73,8 @@
   .end p{margin:16px 0 22px;font-size:clamp(17px,1.4vw,20px);line-height:1.45;color:var(--soft)}
   .end a{display:inline-block;padding:15px 22px;border-radius:3px;background:var(--ink);color:var(--paper);text-decoration:none;font-weight:600}
 
+  .jump-cover{position:fixed;inset:0;z-index:5;background:var(--paper);opacity:0;pointer-events:none;transition:opacity 160ms ease}
+  body.jumping .screen{transition:none;animation:none!important}
   /* where-am-I rail */
   .rail{position:fixed;z-index:3;right:clamp(10px,2vw,28px);top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:6px}
   .rail button{display:flex;justify-content:flex-end;align-items:center;gap:8px;padding:6px 0;border:0;background:none;cursor:pointer;font:inherit;font-size:13px;color:var(--soft)}
@@ -85,10 +87,12 @@
 
   /* Film / 3D switch */
   .mode{position:fixed;z-index:4;top:max(12px,env(safe-area-inset-top));right:clamp(10px,2vw,28px);display:flex;gap:2px;padding:3px;border-radius:4px;background:var(--paper);font-size:14px;box-shadow:0 2px 10px -4px #0005}
-  .mode a{padding:6px 11px;border-radius:2px;text-decoration:none;color:var(--soft)}
+  .mode a{flex:none;white-space:nowrap;padding:6px 11px;border-radius:2px;text-decoration:none;color:var(--soft)}
   .mode a[aria-current]{background:var(--ink);color:var(--paper)}
 
   @media (max-width:760px){
+    .mode{left:var(--g);right:var(--g);max-width:calc(100vw - 2*var(--g));overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}
+    .mode::-webkit-scrollbar{display:none}
     .hero{top:max(40px,env(safe-area-inset-top));transform:none;max-width:none;right:var(--g)}
     .projects{top:18vh;align-content:center;grid-template-columns:1fr;gap:16px;overflow:auto}
     .info .desc{font-size:16px}
@@ -146,8 +150,10 @@
     </div>
   </section>
 </main>
+<div class="jump-cover" id="jumpCover" aria-hidden="true"></div>
 
-<nav class="mode" aria-label="Wersja animacji"><a href="../video/" data-v="video">Film 1</a><a href="../3d/" data-v="3d">3D 1</a><a href="../3d-2/" data-v="3d-2" aria-current="page">3D 2</a><a href="../video-2/" data-v="video-2">Film 2</a></nav>
+<nav class="mode" aria-label="Wersja"></nav>
+<script src="../versions.js"></script>
 
 <nav class="rail" aria-label="Sekcje">
   <button data-go="0" aria-current="true"><span>Start</span></button>
@@ -263,8 +269,10 @@ void main(){
 
   vec3 paper=vec3(0.925,0.922,0.902), white=vec3(1.0);
   vec3 bg=uS<1.5?paper:white;
-  float ds=liquid(p+vec2(0.010,0.024),asp,uS,t);
-  bg*=1.0-0.12*(1.0-smoothstep(0.0,0.06,ds))*(1.0-a);
+  if(d<0.10 && a<1.0){
+    float ds=liquid(p+vec2(0.010,0.024),asp,uS,t);
+    bg*=1.0-0.12*(1.0-smoothstep(0.0,0.06,ds))*(1.0-a);
+  }
   if(a<=0.0){ gl_FragColor=vec4(bg,1.0); return; }
 
   /* puddle profile: flat on top, curving down to a rounded meniscus at every edge */
@@ -298,7 +306,7 @@ void main(){
 
   /* --- WebGL --- */
   var canvas = document.getElementById('gl');
-  var gl = canvas.getContext('webgl', {antialias:false, alpha:false});
+  var gl = canvas.getContext('webgl', {antialias:false, alpha:false, powerPreference:'high-performance', desynchronized:true});
   var uRes, uTime, uS;
   if (gl) {
     var vs = 'attribute vec2 p;void main(){gl_Position=vec4(p,0.0,1.0);}';
@@ -315,30 +323,52 @@ void main(){
   }
   if (!gl) document.body.classList.add('nogl');
 
+  var cssW = 0, cssH = 0, cap = 1, scale = 1, avg = 16.7, slow = 0, fast = 0, lastFrame = 0, motion = null;
+  function resize(){
+    var box = canvas.getBoundingClientRect(); cssW = box.width; cssH = box.height;
+    cap = Math.min(devicePixelRatio || 1, innerWidth < 760 ? 1.5 : 1.25);
+    resizeBuffer();
+  }
+  function resizeBuffer(){
+    if (!gl) return;
+    var w = Math.max(1, Math.floor(cssW * cap * scale)), h = Math.max(1, Math.floor(cssH * cap * scale));
+    if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; gl.viewport(0, 0, w, h); }
+  }
+  if (gl) {
+    if ('ResizeObserver' in window) new ResizeObserver(resize).observe(canvas);
+    addEventListener('resize', resize); resize();
+  }
   function frame(now){
+    var dt = lastFrame ? now - lastFrame : 16.7; lastFrame = now;
+    if (motion) {
+      var k = Math.min(1, (now - motion.start) / motion.ms);
+      var eased = k * k * (3 - 2 * k);
+      S = motion.from + (motion.to - motion.from) * eased;
+      if (k === 1) { var done = motion.resolve; motion = null; done(); }
+    }
     if (gl && !document.hidden) {
-      var dpr = Math.min(devicePixelRatio || 1, innerWidth < 760 ? 1.5 : 1.25);
-      var w = Math.floor(canvas.clientWidth * dpr), h = Math.floor(canvas.clientHeight * dpr);
-      if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; gl.viewport(0, 0, w, h); }
-      gl.uniform2f(uRes, w, h); gl.uniform1f(uTime, reduce ? 0 : now * 0.0006); gl.uniform1f(uS, S);
+      if (dt < 100) {
+        avg += (dt - avg) * .06;
+        slow = avg > 20 ? slow + dt : 0; fast = avg < 14 ? fast + dt : 0;
+        if (slow >= 500 && scale > .55) { scale = Math.max(.55, +(scale - .1).toFixed(2)); slow = 0; fast = 0; resizeBuffer(); }
+        if (fast >= 2000 && scale < 1) { scale = Math.min(1, +(scale + .1).toFixed(2)); slow = 0; fast = 0; resizeBuffer(); }
+      }
+      gl.uniform2f(uRes, canvas.width, canvas.height); gl.uniform1f(uTime, reduce ? 0 : now * .0006); gl.uniform1f(uS, S);
       gl.drawArrays(gl.TRIANGLES, 0, 6);
     }
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
 
-  /* move S (the liquid's state) from one screen value to the next */
   function tween(from, to, secs){
     return new Promise(function(res){
       if (reduce || !gl) { S = to; return res(); }
-      var t0 = performance.now();
-      (function tick(now){
-        var k = Math.min(1, (now - t0) / (secs * 1000));
-        S = from + (to - from) * k;
-        if (k < 1) requestAnimationFrame(tick); else res();
-      })(t0);
+      motion = {from:from, to:to, start:performance.now(), ms:secs * 1000, resolve:res};
     });
   }
+  function railTo(i){ rail.forEach(function(b,k){ b.setAttribute('aria-current', k === i ? 'true' : 'false'); }); }
+  function pause(ms){ return new Promise(function(res){ setTimeout(res, ms); }); }
+  var cover = document.getElementById('jumpCover');
 
   function setScreen(i, dir, secs){
     screens.forEach(function(s, k){
@@ -350,9 +380,9 @@ void main(){
       if (k === i) s.classList.add('on'); else s.classList.remove('on');
     });
     if (i >= 0) {
-      rail.forEach(function(b, k){ b.setAttribute('aria-current', k === i ? 'true' : 'false'); });
+      railTo(queue !== null ? queue : i);
       document.body.classList.toggle('dark', i === 1);
-      document.body.setAttribute('data-at', i);
+      document.body.setAttribute('data-at', i); window.__screen = i;
       [].forEach.call(document.querySelectorAll('.mode a'), function(a){ a.href = '../' + a.getAttribute('data-v') + '/?s=' + i; });
     }
   }
@@ -366,15 +396,25 @@ void main(){
       at = to; setScreen(at, 0); screens[at].classList.remove('leaving');
     });
   }
+  function jump(to){
+    if (reduce) { S = to; at = to; setScreen(to, 0); return Promise.resolve(); }
+    document.body.classList.add('jumping'); cover.style.opacity = '1';
+    return pause(160).then(function(){
+      S = to; at = to; setScreen(to, 0);
+      cover.style.transitionDuration = '240ms'; cover.style.opacity = '0';
+      return pause(240);
+    }).then(function(){ document.body.classList.remove('jumping'); cover.style.transitionDuration = '160ms'; });
+  }
   function go(target){
     target = Math.max(0, Math.min(LAST, target));
+    railTo(target);
     if (busy) { queue = target; return; }
     if (target === at) return;
     busy = true;
-    step(target > at ? 1 : -1).then(function(){
+    (Math.abs(target - at) > 1 ? jump(target) : step(target > at ? 1 : -1)).then(function(){
       busy = false;
-      var next = queue !== null ? queue : target; queue = null;
-      if (next !== at) go(next);
+      var next = queue; queue = null;
+      if (next !== null && next !== at) go(next); else railTo(at);
     });
   }
 
@@ -383,8 +423,8 @@ void main(){
   addEventListener('wheel', function(e){
     e.preventDefault();
     var now = performance.now();
-    if (busy || now - lastWheel < 700 || Math.abs(e.deltaY) < 12) { lastWheel = Math.max(lastWheel, busy ? now : lastWheel); return; }
-    lastWheel = now; go(at + (e.deltaY > 0 ? 1 : -1));
+    if (now - lastWheel < 700 || Math.abs(e.deltaY) < 12) return;
+    lastWheel = now; go((queue !== null ? queue : at) + (e.deltaY > 0 ? 1 : -1));
   }, {passive:false});
   /* touch: own the whole gesture, or iOS turns it into a page pan and cancels touchend */
   var tx = 0, ty = 0, lx = 0, ly = 0, touching = false;

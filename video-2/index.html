@@ -24,7 +24,9 @@
   .stage{position:fixed;inset:0;background:#fff;overflow:hidden}
   .film{position:absolute;inset:0;--lift:-21%;transition:transform var(--lt,2.7s) cubic-bezier(.65,0,.35,1)}
   /* projects screen: pull the drip line up to the top edge so it just hangs into the page */
+  body.jumping .film{transition:none}
   .stage.lift .film{transform:translateY(var(--lift))}
+  .stage.down .film{transform:translateY(16vh)}
   .stage video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:62% 50%;opacity:0;pointer-events:none}
   .stage video.on{opacity:1}
 
@@ -69,11 +71,13 @@
   .ctrl span{font-variant-numeric:tabular-nums;color:var(--soft);font-size:15px;min-width:4ch}
 
   /* 4 end */
-  .end{position:absolute;right:var(--g);top:clamp(28px,12vh,140px);max-width:min(700px,calc(100% - 2*var(--g)));text-align:right}
+  .end{position:absolute;left:var(--g);right:auto;top:clamp(84px,11vh,130px);bottom:auto;max-width:min(700px,calc(100% - 2*var(--g)));text-align:left}
   .end h2{margin:0;font-size:clamp(40px,5.6vw,92px);line-height:.9;letter-spacing:-.045em}
   .end p{margin:16px 0 22px;font-size:clamp(17px,1.4vw,20px);line-height:1.45;color:var(--soft)}
   .end a{display:inline-block;padding:15px 22px;border-radius:3px;background:var(--ink);color:var(--paper);text-decoration:none;font-weight:600}
 
+  .jump-cover{position:fixed;inset:0;z-index:5;background:var(--paper);opacity:0;pointer-events:none;transition:opacity 160ms ease}
+  body.jumping .screen{transition:none;animation:none!important}
   /* where-am-I rail */
   .rail{position:fixed;z-index:3;right:clamp(10px,2vw,28px);top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:6px}
   .rail button{display:flex;justify-content:flex-end;align-items:center;gap:8px;padding:6px 0;border:0;background:none;cursor:pointer;font:inherit;font-size:13px;color:var(--soft)}
@@ -86,15 +90,19 @@
 
   /* Film / 3D switch */
   .mode{position:fixed;z-index:4;top:max(12px,env(safe-area-inset-top));right:clamp(10px,2vw,28px);display:flex;gap:2px;padding:3px;border-radius:4px;background:var(--paper);font-size:14px;box-shadow:0 2px 10px -4px #0005}
-  .mode a{padding:6px 11px;border-radius:2px;text-decoration:none;color:var(--soft)}
+  .mode a{flex:none;white-space:nowrap;padding:6px 11px;border-radius:2px;text-decoration:none;color:var(--soft)}
   .mode a[aria-current]{background:var(--ink);color:var(--paper)}
 
   @media (max-width:760px){
+    .mode{left:var(--g);right:var(--g);max-width:calc(100vw - 2*var(--g));overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}
+    .mode::-webkit-scrollbar{display:none}
     .stage video{object-position:68% 50%}
     .hero{top:max(40px,env(safe-area-inset-top));transform:none;max-width:none;right:var(--g)}
     .projects{top:14vh;align-content:center;grid-template-columns:1fr;gap:16px;overflow:auto}
     .info .desc{font-size:16px}
-    .end{left:var(--g);text-align:left;top:24px}
+    .end{left:var(--g);right:auto;text-align:left;top:84px;bottom:auto}
+    .stage.down .film{transform:none}
+    .end a{background:var(--ink)}
     .rail{display:none}
   }
   @media (prefers-reduced-motion:reduce){.cue::after{animation:none}.screen.leaving{animation-duration:.01s}}
@@ -102,12 +110,12 @@
 </head>
 <body>
 <div class="stage" id="stage" aria-hidden="true"><div class="film">
-  <video id="f0" src="clips/v1-splash.mp4" muted playsinline preload="auto" poster="clips/poster.jpg" class="on"></video>
-  <video id="f1" src="clips/v2-bead.mp4" muted playsinline preload="auto"></video>
-  <video id="f2" src="clips/v3-pour.mp4" muted playsinline preload="auto"></video>
-  <video id="r0" src="clips/v1-splash-rev.mp4" muted playsinline preload="auto"></video>
-  <video id="r1" src="clips/v2-bead-rev.mp4" muted playsinline preload="auto"></video>
-  <video id="r2" src="clips/v3-pour-rev.mp4" muted playsinline preload="auto"></video>
+  <video id="f0" src="clips/v1-splash.mp4" muted playsinline preload="metadata" poster="clips/poster.jpg" class="on"></video>
+  <video id="f1" src="clips/v2-bead.mp4" muted playsinline preload="metadata"></video>
+  <video id="f2" src="clips/v3-pour.mp4" muted playsinline preload="metadata"></video>
+  <video id="r0" src="clips/v1-splash-rev.mp4" muted playsinline preload="metadata"></video>
+  <video id="r1" src="clips/v2-bead-rev.mp4" muted playsinline preload="metadata"></video>
+  <video id="r2" src="clips/v3-pour-rev.mp4" muted playsinline preload="metadata"></video>
 </div></div>
 
 <main>
@@ -155,8 +163,10 @@
     </div>
   </section>
 </main>
+<div class="jump-cover" id="jumpCover" aria-hidden="true"></div>
 
-<nav class="mode" aria-label="Wersja animacji"><a href="../video/" data-v="video">Film 1</a><a href="../3d/" data-v="3d">3D 1</a><a href="../3d-2/" data-v="3d-2">3D 2</a><a href="../video-2/" data-v="video-2" aria-current="page">Film 2</a></nav>
+<nav class="mode" aria-label="Wersja"></nav>
+<script src="../versions.js"></script>
 
 <nav class="rail" aria-label="Sekcje">
   <button data-go="0" aria-current="true"><span>Start</span></button>
@@ -185,6 +195,15 @@
   }
   fitLift(); addEventListener('resize', fitLift);
 
+  function preloadNear(i){
+    fwd.concat(rev).forEach(function(v, n){
+      var needed = n < 3 ? Math.abs(n - i) <= 1 : Math.abs(n - 2 - i) <= 1;
+      v.preload = needed ? 'auto' : 'metadata';
+    });
+  }
+  function railTo(i){ rail.forEach(function(b,k){ b.setAttribute('aria-current', k === i ? 'true' : 'false'); }); }
+  function pause(ms){ return new Promise(function(res){ setTimeout(res, ms); }); }
+  var cover = document.getElementById('jumpCover');
   function seek(v, t){
     return new Promise(function(res){
       if (Math.abs(v.currentTime - t) < 0.01 && v.readyState >= 2) return res();
@@ -221,9 +240,9 @@
       }
       if (k === i) s.classList.add('on'); else s.classList.remove('on');
     });
-    rail.forEach(function(b, k){ b.setAttribute('aria-current', k === i ? 'true' : 'false'); });
+    if (i >= 0) railTo(queue !== null ? queue : i);
     document.body.classList.toggle('dark', i === 1);
-    if (i >= 0) [].forEach.call(document.querySelectorAll('.mode a'), function(a){ a.href = '../' + a.getAttribute('data-v') + '/?s=' + i; });
+    if (i >= 0) { window.__screen = i; preloadNear(i); [].forEach.call(document.querySelectorAll('.mode a'), function(a){ a.href = '../' + a.getAttribute('data-v') + '/?s=' + i; }); }
   }
 
   function step(dir){
@@ -234,6 +253,7 @@
     setScreen(-1, dir);           /* wipe the current text away with the wave */
     stage.style.setProperty('--lt', (reduce ? 0 : clipSecs / RATE) + 's');
     stage.classList.toggle('lift', to === 2);   /* glide in step with the clip */
+    stage.classList.toggle('down', to === 3);
     return ready(clip).then(function(){ return seek(clip, 0); })
       .then(function(){ show(clip); return play(clip); })
       .then(function(){
@@ -243,15 +263,33 @@
       })
       .then(function(){ setScreen(at, 0); screens[at].classList.remove('leaving'); });
   }
+  function jump(to){
+    var v = fwd[Math.min(to, LAST - 1)];
+    var frame = ready(v).then(function(){ return seek(v, to === LAST ? v.duration - 0.05 : 0); });
+    if (reduce) {
+      return frame.then(function(){
+        document.body.classList.add('jumping'); show(v); stage.classList.toggle('lift', to === 2); stage.classList.toggle('down', to === 3);
+        at = to; setScreen(to, 0); document.body.classList.remove('jumping');
+      });
+    }
+    document.body.classList.add('jumping'); cover.style.opacity = '1';
+    return Promise.all([pause(160), frame]).then(function(){
+      show(v); stage.classList.toggle('lift', to === 2); stage.classList.toggle('down', to === 3);
+      at = to; setScreen(to, 0);
+      cover.style.transitionDuration = '240ms'; cover.style.opacity = '0';
+      return pause(240);
+    }).then(function(){ document.body.classList.remove('jumping'); cover.style.transitionDuration = '160ms'; });
+  }
   function go(target){
     target = Math.max(0, Math.min(LAST, target));
+    railTo(target);
     if (busy) { queue = target; return; }
     if (target === at) return;
     busy = true;
-    step(target > at ? 1 : -1).then(function(){
+    (Math.abs(target - at) > 1 ? jump(target) : step(target > at ? 1 : -1)).then(function(){
       busy = false;
-      var next = queue !== null ? queue : target; queue = null;
-      if (next !== at) go(next);
+      var next = queue; queue = null;
+      if (next !== null && next !== at) go(next); else railTo(at);
     });
   }
 
@@ -260,8 +298,8 @@
   addEventListener('wheel', function(e){
     e.preventDefault();
     var now = performance.now();
-    if (busy || now - lastWheel < 700 || Math.abs(e.deltaY) < 12) { lastWheel = Math.max(lastWheel, busy ? now : lastWheel); return; }
-    lastWheel = now; go(at + (e.deltaY > 0 ? 1 : -1));
+    if (now - lastWheel < 450 || Math.abs(e.deltaY) < 12) return;
+    lastWheel = now; go((queue !== null ? queue : at) + (e.deltaY > 0 ? 1 : -1));
   }, {passive:false});
   /* touch: own the whole gesture, or iOS turns it into a page pan and cancels touchend */
   var tx = 0, ty = 0, lx = 0, ly = 0, touching = false;
@@ -309,7 +347,7 @@
 
   /* ?s=N opens on screen N (used by the Film / 3D switch) */
   at = Math.max(0, Math.min(LAST, parseInt(new URLSearchParams(location.search).get('s'), 10) || 0));
-  stage.style.setProperty('--lt', '0s'); stage.classList.toggle('lift', at === 2);
+  stage.style.setProperty('--lt', '0s'); stage.classList.toggle('lift', at === 2); stage.classList.toggle('down', at === 3);
   setScreen(at, 0); rest(at);
 })();
 </script>
