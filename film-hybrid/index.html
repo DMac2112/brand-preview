@@ -1,0 +1,1043 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Dominik Machowiak — strony internetowe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#ecebe6; --ink:#17191c; --gunmetal:#2c3135; --mercury:#9aa3a8; --white:#ffffff; --soft:#5b6166;
+    --g:clamp(16px,6vw,96px);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;overflow:hidden;background:var(--paper);color:var(--ink);
+    font-family:"Familjen Grotesk",system-ui,sans-serif;-webkit-font-smoothing:antialiased;overscroll-behavior:none}
+  body{touch-action:none}
+  a{color:inherit}
+  [hidden]{display:none!important}
+  :focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+
+  /* video stage */
+  .stage{position:fixed;inset:0;background:#fff;overflow:hidden}
+  .film{position:absolute;inset:0;--lift:-21%;transition:transform var(--lt,2.7s) cubic-bezier(.65,0,.35,1)}
+  /* projects screen: pull the drip line up to the top edge so it just hangs into the page */
+  body.jumping .film{transition:none}
+  .stage.lift .film{transform:translateY(var(--lift))}
+  .stage video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:62% 50%;opacity:0;pointer-events:none}
+  .stage video.on{opacity:1}
+  .stage #chrome{position:absolute;inset:0;width:100%;height:100%;display:block;opacity:0;pointer-events:none}
+  body.chrome-live .stage video.on{opacity:0}
+  body.chrome-live .stage #chrome{opacity:1}
+  /* Start frame with the bean painted out: lets the live blob move without revealing the filmed bean. */
+  .stage #plate{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:62% 50%;opacity:0;pointer-events:none}
+  body.ferro-plate .stage #plate{opacity:1}
+  .stage #ferro{position:absolute;z-index:1;pointer-events:none;opacity:0;transition:opacity .16s linear}
+  /* Arriving: a slow dissolve from the filmed bean into the live one. Leaving keeps the quick .16s fade. */
+  body.ferro-on .stage #ferro{opacity:1;transition-duration:.48s}
+
+  /* screens: text layers above the film */
+  .screen{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:0;transition:opacity .25s}
+  .screen.on{opacity:1;pointer-events:auto}
+  .screen.leaving{opacity:1;animation:wipe var(--wipe,.9s) cubic-bezier(.55,0,.75,.4) forwards}
+  .screen.leaving.up{animation-name:wipeUp}
+  @keyframes wipe{from{clip-path:inset(0 0 0 0)}to{clip-path:inset(0 0 0 100%)}}
+  @keyframes wipeUp{from{clip-path:inset(0 0 0 0)}to{clip-path:inset(0 0 100% 0)}}
+
+  /* 1 landing */
+  .hero{position:absolute;left:var(--g);top:50%;transform:translateY(-50%);max-width:min(44vw,620px)}
+  .hero h1{margin:0;font-weight:700;font-size:clamp(44px,7.4vw,124px);line-height:.88;letter-spacing:-.045em}
+  .hero p{margin:clamp(16px,2.4vw,30px) 0 0;max-width:34ch;font-size:clamp(17px,1.5vw,22px);line-height:1.4;color:var(--soft)}
+  .cue{position:absolute;left:var(--g);bottom:max(24px,env(safe-area-inset-bottom));display:flex;align-items:center;gap:10px;
+    font:inherit;font-size:15px;color:var(--soft);background:none;border:0;padding:6px 0;cursor:pointer}
+  .cue::after{content:"";width:1px;height:28px;background:currentColor;animation:drip 2.2s ease-in-out infinite;transform-origin:top}
+  @keyframes drip{0%{transform:scaleY(.2)}60%{transform:scaleY(1)}100%{transform:scaleY(.2)}}
+
+  /* 2 what I do — opaque sheet on the chrome */
+  .sheet{position:absolute;left:var(--g);bottom:clamp(24px,8vh,96px);width:min(560px,calc(100% - 2*var(--g)));
+    background:var(--paper);padding:clamp(22px,3vw,40px);border-radius:3px}
+  .sheet h2{margin:0 0 14px;font-size:clamp(30px,3.6vw,52px);line-height:1;letter-spacing:-.035em}
+  .sheet ul{margin:0;padding:0;list-style:none}
+  .sheet li{padding:12px 0;border-top:1px solid #17191c22;font-size:clamp(16px,1.35vw,19px);line-height:1.4}
+
+  /* 3 projects — white, under the drip line */
+  .projects{position:absolute;left:var(--g);right:var(--g);top:12vh;bottom:max(24px,6vh);margin:0 auto;max-width:1320px;
+    display:grid;grid-template-columns:minmax(0,1.5fr) minmax(240px,1fr);gap:clamp(20px,3vw,56px);align-items:center;align-content:center}
+  .shot{position:relative;aspect-ratio:16/10;border-radius:4px;overflow:hidden;background:#f1f1ef;box-shadow:0 1px 0 #0000000f,0 18px 40px -24px #2c313580}
+  .shot img{width:100%;height:100%;object-fit:cover;object-position:top;display:block}
+  .shot .name{position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;
+    font-size:clamp(24px,2.6vw,40px);font-weight:700;letter-spacing:-.03em;background:var(--gunmetal);color:var(--paper)}
+  .info h2{margin:0;font-size:clamp(28px,3vw,46px);line-height:1;letter-spacing:-.035em}
+  .info .status{margin:12px 0 0;color:var(--soft);font-size:15px}
+  .info .desc{margin:14px 0 0;font-size:clamp(17px,1.4vw,20px);line-height:1.45;max-width:36ch}
+  .info .visit{display:inline-block;margin-top:18px;font-weight:600;text-underline-offset:4px}
+  .ctrl{display:flex;align-items:center;gap:14px;margin-top:clamp(20px,4vh,40px)}
+  .ctrl button{width:48px;height:48px;border-radius:50%;border:0;cursor:pointer;color:var(--paper);font:600 20px/1 inherit;
+    background:radial-gradient(circle at 34% 28%,#a9b0b5 0,#4a5156 34%,#1c1f22 72%);box-shadow:inset 0 -2px 4px #0006,0 6px 14px -6px #000a}
+  .ctrl span{font-variant-numeric:tabular-nums;color:var(--soft);font-size:15px;min-width:4ch}
+
+  /* 4 end */
+  .end{position:absolute;left:var(--g);right:auto;top:auto;bottom:clamp(56px,14vh,160px);max-width:min(700px,calc(100% - 2*var(--g)));text-align:left}
+  /* Same paper sheet as "Co robię": the subline stays readable wherever the chrome flows. */
+  .end{background:var(--paper);padding:clamp(22px,3vw,40px);border-radius:3px}
+  .end h2{margin:0;font-size:clamp(40px,5.6vw,92px);line-height:.9;letter-spacing:-.045em}
+  .end p{margin:16px 0 22px;font-size:clamp(17px,1.4vw,20px);line-height:1.45;color:var(--soft)}
+  .end a{display:inline-block;padding:15px 22px;border-radius:3px;background:var(--ink);color:var(--paper);text-decoration:none;font-weight:600}
+
+  .jump-cover{position:fixed;inset:0;z-index:5;background:var(--paper);opacity:0;pointer-events:none;transition:opacity 160ms ease}
+  body.jumping .screen{transition:none;animation:none!important}
+  /* where-am-I rail */
+  .rail{position:fixed;z-index:3;right:clamp(10px,2vw,28px);top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:6px}
+  .rail button{display:flex;justify-content:flex-end;align-items:center;gap:8px;padding:6px 0;border:0;background:none;cursor:pointer;font:inherit;font-size:13px;color:var(--soft)}
+  .rail button::after{content:"";width:18px;height:2px;background:currentColor;opacity:.45;transition:width .25s,opacity .25s}
+  .rail button[aria-current="true"]{color:var(--ink)}
+  .rail button[aria-current="true"]::after{width:34px;opacity:1}
+  .rail span{opacity:0;transition:opacity .2s}
+  .rail:hover span,.rail button:focus-visible span{opacity:1}
+  body.dark .rail button{color:#d9dcde}
+
+  /* Film / 3D switch */
+  .mode{position:fixed;z-index:4;top:max(12px,env(safe-area-inset-top));right:clamp(10px,2vw,28px);display:flex;gap:2px;padding:3px;border-radius:4px;background:var(--paper);font-size:14px;box-shadow:0 2px 10px -4px #0005}
+  .mode a{flex:none;white-space:nowrap;padding:6px 11px;border-radius:2px;text-decoration:none;color:var(--soft)}
+  .mode a[aria-current]{background:var(--ink);color:var(--paper)}
+
+  @media (max-width:760px){
+    .mode{left:var(--g);right:var(--g);max-width:calc(100vw - 2*var(--g));overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}
+    .mode::-webkit-scrollbar{display:none}
+    .stage video{object-position:68% 50%}
+    .hero{top:max(40px,env(safe-area-inset-top));transform:none;max-width:none;right:var(--g)}
+    .projects{top:14vh;align-content:center;grid-template-columns:1fr;gap:16px;overflow:auto}
+    .info .desc{font-size:16px}
+    .end{left:var(--g);right:auto;text-align:left;top:auto;bottom:calc(32px + env(safe-area-inset-bottom))}
+    .end a{background:var(--ink)}
+    .rail{display:none}
+  }
+  /* Big monitors at 1x (2K, ultrawide, 4K): the type caps were set for laptop sizes, so scale the UI blocks up with the screen. */
+  @media (min-width:2300px) and (min-height:1300px){
+    .hero,.cue,.sheet,.end,.rail,.mode,.info{zoom:1.3}
+    .projects{max-width:1720px}
+  }
+  @media (min-width:3200px) and (min-height:1800px){
+    .hero,.cue,.sheet,.end,.rail,.mode,.info{zoom:1.8}
+    .projects{max-width:2380px}
+  }
+  /* Small laptops: keep the headline clear of the bean. */
+  @media (min-width:761px) and (max-width:1280px){ .hero h1{font-size:6.2vw} .hero{max-width:40vw} }
+  /* Portrait tablets: the bean fills the lower half, so the headline moves above it. */
+  @media (min-width:761px) and (max-aspect-ratio:1/1){
+    .hero{top:clamp(88px,11vh,150px);transform:none;max-width:min(78vw,640px)}
+  }
+  @media (prefers-reduced-motion:reduce){.cue::after{animation:none}.screen.leaving{animation-duration:.01s}}
+</style>
+</head>
+<body>
+<div class="stage" id="stage" aria-hidden="true"><div class="film">
+  <video id="f0" src="../video/clips/v1-sweep.mp4" muted playsinline preload="metadata" poster="../video/clips/poster.jpg" class="on"></video>
+  <video id="f1" src="../video/clips/v2-drain.mp4" muted playsinline preload="metadata"></video>
+  <video id="f2" src="../video/clips/v3-tide.mp4" muted playsinline preload="metadata"></video>
+  <video id="r0" src="../video/clips/v1-sweep-rev.mp4" muted playsinline preload="metadata"></video>
+  <video id="r1" src="../video/clips/v2-drain-rev.mp4" muted playsinline preload="metadata"></video>
+  <video id="r2" src="../video/clips/v3-tide-rev.mp4" muted playsinline preload="metadata"></video>
+  <canvas id="chrome" aria-hidden="true"></canvas>
+  <img id="plate" src="plate.jpg" alt="" aria-hidden="true" decoding="async">
+  <canvas id="ferro" aria-hidden="true"></canvas>
+</div></div>
+
+<main>
+  <section class="screen on" data-i="0" aria-label="Start">
+    <div class="hero">
+      <h1>Dominik Machowiak</h1>
+      <p>Robię strony internetowe dla małych firm z Kalisza i okolic. Proste, szybkie, zrozumiałe dla Twoich klientów.</p>
+    </div>
+    <button class="cue" data-go="1">Przewiń w dół</button>
+  </section>
+
+  <section class="screen" data-i="1" aria-label="Co robię">
+    <div class="sheet">
+      <h2>Co robię</h2>
+      <ul>
+        <li>Projektuję stronę pod Twoich klientów: co chcą sprawdzić i jak mają się z Tobą skontaktować.</li>
+        <li>Piszę teksty prostym językiem, bez branżowego żargonu.</li>
+        <li>Wdrażam stronę i sprawdzam, czy działa na telefonie.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="screen" data-i="2" aria-label="Projekty">
+    <div class="projects">
+      <div class="shot" id="shot"></div>
+      <div class="info">
+        <h2 id="pLabel"></h2>
+        <p class="status" id="pStatus"></p>
+        <p class="desc" id="pDesc"></p>
+        <a class="visit" id="pLink" target="_blank" rel="noopener" hidden>Zobacz stronę</a>
+        <div class="ctrl">
+          <button id="prev" aria-label="Poprzedni projekt">‹</button>
+          <button id="next" aria-label="Następny projekt">›</button>
+          <span id="pCount" aria-live="polite"></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="screen" data-i="3" aria-label="Kontakt">
+    <div class="end">
+      <h2>Porozmawiajmy</h2>
+      <p>Napisz, czego potrzebuje Twoja firma.</p>
+      <a href="../#kontakt">Napisz do mnie</a>
+    </div>
+  </section>
+</main>
+<div class="jump-cover" id="jumpCover" aria-hidden="true"></div>
+
+<nav class="mode" aria-label="Wersja"></nav>
+<script src="../versions.js"></script>
+
+<nav class="rail" aria-label="Sekcje">
+  <button data-go="0" aria-current="true"><span>Start</span></button>
+  <button data-go="1"><span>Co robię</span></button>
+  <button data-go="2"><span>Projekty</span></button>
+  <button data-go="3"><span>Kontakt</span></button>
+</nav>
+
+<script src="../projects-data.js?v=4.1" charset="utf-8"></script>
+<script id="chrome-fs" type="x-shader/x-fragment">
+precision highp float;
+uniform sampler2D uVideo;
+#ifdef PASS_FINAL
+uniform sampler2D uMask, uHeight;
+#endif
+uniform vec2 uRes, uVideoSize, uStageSize;
+uniform float uTime, uMacroTime, uCalm, uScreen, uRest;
+
+/* Command Centre chrome height field from 3D 1. */
+vec2 hash(vec2 p){ p=vec2(dot(p,vec2(127.1,311.7)),dot(p,vec2(269.5,183.3))); return -1.0+2.0*fract(sin(p)*43758.5453123); }
+float noise(vec2 p){ vec2 i=floor(p); vec2 f=fract(p); vec2 u=f*f*(3.0-2.0*f);
+  return mix(mix(dot(hash(i),f),dot(hash(i+vec2(1.0,0.0)),f-vec2(1.0,0.0)),u.x),
+             mix(dot(hash(i+vec2(0.0,1.0)),f-vec2(0.0,1.0)),dot(hash(i+vec2(1.0,1.0)),f-vec2(1.0,1.0)),u.x),u.y); }
+float fbmMacro(vec2 p){ float v=0.0,a=0.5; mat2 r=mat2(0.8,0.6,-0.6,0.8);
+  for(int i=0;i<4;i++){ v+=a*noise(p); p=r*p*1.9; a*=0.52; } return v; }
+float heightMacro(vec2 p,float t){ vec2 q=vec2(fbmMacro(p+t*0.035),fbmMacro(p+vec2(5.2,1.3)+t*0.028));
+  vec2 r=vec2(fbmMacro(p+2.6*q+vec2(1.7,9.2)-t*0.02),fbmMacro(p+2.6*q+vec2(8.3,2.8)+t*0.016));
+  return fbmMacro(p+2.6*r+t*0.009); }
+float heightSoft(vec2 p,float t){
+  return 0.5*(heightMacro(p+vec2(0.012,0.012),t)+heightMacro(p-vec2(0.012,0.012),t));
+}
+
+float lum(vec3 c){ return dot(c,vec3(0.2126,0.7152,0.0722)); }
+float blurredVideoLum(vec2 uv,vec2 dx,vec2 dy){
+  return (4.0*lum(texture2D(uVideo,uv).rgb)
+    +lum(texture2D(uVideo,uv-dx).rgb)+lum(texture2D(uVideo,uv+dx).rgb)
+    +lum(texture2D(uVideo,uv-dy).rgb)+lum(texture2D(uVideo,uv+dy).rgb))/8.0;
+}
+float metalEvidence(vec3 c){
+  vec3 paper=vec3(0.925,0.922,0.902);
+  return min(length(c-paper),length(c-vec3(1.0)));
+}
+float rawMask(vec2 uv,vec2 dx,vec2 dy){
+  vec3 c=texture2D(uVideo,uv).rgb;
+  vec3 l=texture2D(uVideo,uv-dx).rgb, r=texture2D(uVideo,uv+dx).rgb;
+  vec3 b=texture2D(uVideo,uv-dy).rgb, t=texture2D(uVideo,uv+dy).rgb;
+  float evidence=(4.0*metalEvidence(c)+metalEvidence(l)+metalEvidence(r)
+    +metalEvidence(b)+metalEvidence(t))/8.0;
+  float blurredLum=lum((4.0*c+l+r+b+t)/8.0);
+  float lo=min(lum(c),min(min(lum(l),lum(r)),min(lum(b),lum(t))));
+  float hi=max(lum(c),max(max(lum(l),lum(r)),max(lum(b),lum(t))));
+  float dark=smoothstep(0.25,0.32,0.922-blurredLum);
+  float edge=smoothstep(0.13,0.24,hi-lo);
+  return smoothstep(0.20,0.36,evidence)*max(dark,edge);
+}
+float coverageSample(vec2 uv){
+  return smoothstep(0.17,0.30,0.922-lum(texture2D(uVideo,uv).rgb));
+}
+#ifdef PASS_MASK
+/* Runs only when a new video frame arrives: metal mask, coverage and blurred video gradient. */
+void main(){
+  vec2 screenUV=gl_FragCoord.xy/uRes;
+  /* CSS object-fit:cover and object-position:62% 50%, in bottom-origin coordinates. */
+  float coverScale=max(uStageSize.x/uVideoSize.x,uStageSize.y/uVideoSize.y);
+  vec2 cover=uVideoSize*coverScale/uStageSize;
+  vec2 origin=(vec2(1.0)-cover)*vec2(0.62,0.5);
+  vec2 uv=(screenUV-origin)/cover;
+  vec2 dx=vec2(5.0/uStageSize.x/cover.x,0.0);
+  vec2 dy=vec2(0.0,5.0/uStageSize.y/cover.y);
+  vec3 c=texture2D(uVideo,uv).rgb;
+  vec3 l=texture2D(uVideo,uv-dx).rgb, r=texture2D(uVideo,uv+dx).rgb;
+  vec3 b0=texture2D(uVideo,uv-dy).rgb, t0=texture2D(uVideo,uv+dy).rgb;
+  vec3 bl=texture2D(uVideo,uv-dx-dy).rgb, br=texture2D(uVideo,uv+dx-dy).rgb;
+  vec3 tl=texture2D(uVideo,uv-dx+dy).rgb, tr=texture2D(uVideo,uv+dx+dy).rgb;
+  vec2 erodeX=vec2(1.5/uStageSize.x/cover.x,0.0);
+  vec2 erodeY=vec2(0.0,1.5/uStageSize.y/cover.y);
+  float m=min(rawMask(uv,dx,dy),min(min(rawMask(uv-erodeX,dx,dy),rawMask(uv+erodeX,dx,dy)),
+    min(rawMask(uv-erodeY,dx,dy),rawMask(uv+erodeY,dx,dy))));
+  /* The pale, low-detail floor shadow below the Start bean is filmed paper. */
+  vec2 qa=screenUV*vec2(1440.0,900.0);
+  float localContrast=max(max(abs(lum(c)-lum(l)),abs(lum(c)-lum(r))),
+    max(abs(lum(c)-lum(b0)),abs(lum(c)-lum(t0))));
+  /* Resting on Start: the floor shadow under the bean is filmed paper, never chrome. */
+  if(uRest>0.5 && (1.0-uv.y)*720.0>556.0) m=0.0;
+  if(uScreen<0.5 && qa.x>540.0 && qa.x<1080.0 && qa.y<210.0 && qa.y>100.0
+    && abs(lum(c)-0.922)<0.30 && (localContrast<0.10 || lum(c)>0.55)) m=0.0;
+  /* Bright highlights inside big metal areas look like paper to rawMask; fill them from the neighbourhood. */
+  vec2 fill=vec2(70.0/uStageSize.x/cover.x,70.0/uStageSize.y/cover.y);
+  float big=(coverageSample(uv+vec2(fill.x,0.0))+coverageSample(uv-vec2(fill.x,0.0))
+    +coverageSample(uv+vec2(0.0,fill.y))+coverageSample(uv-vec2(0.0,fill.y))
+    +coverageSample(uv+fill*0.7071)+coverageSample(uv-fill*0.7071)
+    +coverageSample(uv+vec2(fill.x,-fill.y)*0.7071)+coverageSample(uv+vec2(-fill.x,fill.y)*0.7071))/8.0;
+  m=max(m,smoothstep(0.62,0.88,big)*step(0.5,uScreen)*(1.0-step(1.5,uScreen)));
+
+  /* Differentiate blurred luminance, rather than the video texture's pixel detail. */
+  vec2 gx=dx*2.4, gy=dy*2.4;
+  vec2 videoGrad=vec2(blurredVideoLum(uv+gx,gx,gy)-blurredVideoLum(uv-gx,gx,gy),
+                      blurredVideoLum(uv+gy,gx,gy)-blurredVideoLum(uv-gy,gx,gy));
+  vec2 reach=vec2(110.0/uStageSize.x/cover.x,110.0/uStageSize.y/cover.y);
+  float coverage=(m+coverageSample(uv-vec2(reach.x,0.0))+coverageSample(uv+vec2(reach.x,0.0))
+    +coverageSample(uv-vec2(0.0,reach.y))+coverageSample(uv+vec2(0.0,reach.y)))/5.0;
+  gl_FragColor=vec4(m,coverage,clamp(videoGrad*0.5+0.5,0.0,1.0));
+}
+#endif
+#ifdef PASS_HEIGHT
+/* Low-resolution Command Centre height field: height plus slopes, packed. */
+void main(){
+  vec2 screenUV=gl_FragCoord.xy/uRes;
+  vec2 p=(screenUV-0.5)*vec2(uStageSize.x/uStageSize.y,1.0)*0.85;
+  vec2 eps=vec2(0.025,0.0);
+  float h=heightSoft(p,uMacroTime*0.4), hx=heightSoft(p+eps.xy,uMacroTime*0.4), hy=heightSoft(p+eps.yx,uMacroTime*0.4);
+  gl_FragColor=vec4(clamp(h*0.5+0.5,0.0,1.0),clamp(vec2(h-hx,h-hy)/eps.x*0.58/12.0+0.5,0.0,1.0),1.0);
+}
+#endif
+#ifdef PASS_FINAL
+void main(){
+  vec2 screenUV=gl_FragCoord.xy/uRes;
+  /* CSS object-fit:cover and object-position:62% 50%, in bottom-origin coordinates. */
+  float coverScale=max(uStageSize.x/uVideoSize.x,uStageSize.y/uVideoSize.y);
+  vec2 cover=uVideoSize*coverScale/uStageSize;
+  vec2 origin=(vec2(1.0)-cover)*vec2(0.62,0.5);
+  vec2 uv=(screenUV-origin)/cover;
+  vec3 c=texture2D(uVideo,uv).rgb;
+  vec2 qa=screenUV*vec2(1440.0,900.0);
+  vec4 mk=texture2D(uMask,screenUV);
+  float m=mk.r;
+  if(m<=0.004){
+    /* Co robię is fully neutral: no blue from the source footage where the chrome mask is empty. */
+    float n0=step(0.5,uScreen)*(1.0-step(1.5,uScreen));
+    gl_FragColor=vec4(mix(c,vec3(lum(c)),n0),1.0); return;
+  }
+  float coverage=mk.g; vec2 videoGrad=mk.ba*2.0-1.0;
+  vec2 p=(screenUV-0.5)*vec2(uStageSize.x/uStageSize.y,1.0)*0.85;
+  float normalScale=mix(0.7,0.4,smoothstep(0.35,0.8,coverage));
+  vec3 hs=texture2D(uHeight,screenUV).rgb;
+  float h=hs.r*2.0-1.0; vec2 slope=(hs.gb-0.5)*12.0;
+  vec3 N=normalize(vec3(slope.x*normalScale*uCalm-videoGrad.x*1.7,
+                         slope.y*normalScale*uCalm-videoGrad.y*1.7,0.72));
+  vec3 V=normalize(vec3(p*0.15,1.0)); vec3 R=reflect(-V,N);
+  float fullMetal=smoothstep(0.55,0.9,coverage);
+  float neutral=step(0.5,uScreen)*(1.0-step(1.5,uScreen));
+  float whatScreen=0.0;
+  float envGrad=smoothstep(-0.9,0.9,R.y);
+  float band1=pow(clamp(0.5+0.5*sin(R.x*3.2+R.y*2.1+uTime*0.02),0.0,1.0),mix(mix(3.0,1.5,fullMetal),7.0,whatScreen));
+  float band2=pow(clamp(0.5+0.5*cos(R.z*4.5-R.y*2.6),0.0,1.0),mix(mix(4.5,2.0,fullMetal),9.0,whatScreen));
+  float band3=mix(smoothstep(mix(0.55,-0.15,fullMetal),mix(0.95,0.85,fullMetal),sin(R.y*5.0+R.x*2.2-uTime*0.016)),
+    smoothstep(0.68,0.86,sin(R.y*5.0+R.x*2.2-uTime*0.016)),whatScreen);
+  float env=mix(envGrad*0.20+band1*0.30+band2*0.28+band3*0.60,
+    band1*0.55+band2*0.48+band3*1.15,whatScreen);
+  vec3 L=normalize(vec3(0.45,0.82,0.62)); vec3 Hv=normalize(L+V); float NdotH=max(dot(N,Hv),0.0);
+  float spec=mix(pow(NdotH,60.0)*2.0+pow(NdotH,9.0)*0.45,
+    pow(NdotH,90.0)*2.8+pow(NdotH,20.0)*0.30,whatScreen);
+  float fres=pow(1.0-max(dot(N,V),0.0),3.5);
+  float base=mix(0.045+pow(clamp(h*0.5+0.5,0.0,1.0),2.0)*0.10,0.04,whatScreen);
+  float shine=base+env*mix(0.30+0.70*fres,0.85+0.15*fres,whatScreen)+spec;
+  shine=pow(clamp(shine,0.0,1.0),mix(1.05,1.0,whatScreen));
+  shine+=(fract(sin(dot(gl_FragCoord.xy,vec2(12.9898,78.233)))*43758.5453)-0.5)*0.018;
+  vec3 chrome=vec3(clamp(shine,0.0,1.0));
+  chrome=mix(chrome,vec3(lum(c)),0.15*(1.0-whatScreen));
+  float textZone=smoothstep(40.0,100.0,qa.x)*(1.0-smoothstep(420.0,500.0,qa.x))
+    *smoothstep(120.0,160.0,qa.y)*(1.0-smoothstep(300.0,340.0,qa.y));
+  float railZone=smoothstep(1290.0,1350.0,qa.x);
+  float chromeAmount=m*mix(0.9,1.0,whatScreen)*(1.0-0.5*textZone*step(2.5,uScreen))*(1.0-0.4*railZone*(1.0-whatScreen));
+  float contactZone=step(2.5,uScreen)*(1.0-smoothstep(650.0,700.0,qa.x))
+    *smoothstep(80.0,120.0,qa.y)*(1.0-smoothstep(340.0,380.0,qa.y));
+  chrome=vec3(0.5+(chrome.r-0.5)*(1.0-0.5*contactZone));
+  chrome=min(chrome,vec3(mix(1.0,0.55,contactZone)));
+  vec3 source=mix(c,vec3(lum(c)),neutral);
+  vec3 result=source+(chrome-source)*chromeAmount;
+  result=min(result,vec3(mix(1.0,0.55,contactZone*step(0.5,m))));
+  result=mix(result,vec3(lum(result)),max(neutral,m));
+  gl_FragColor=vec4(result,1.0);
+}
+#endif
+</script>
+<script id="ferro-vs" type="x-shader/x-vertex">#version 300 es
+precision highp float;
+layout(location=0) in vec3 aDirection;
+uniform float uR[128];
+uniform vec3 uS[120];
+uniform float uMeanR, uDepth, uDilate, uTime, uSpike, uMagnet, uLife;
+uniform vec3 uMagDir, uLean;
+uniform vec2 uBox;
+out vec3 vNormal, vPosition;
+float hash3(vec3 p){
+  p=fract(p*0.1031); p+=dot(p,p.yzx+33.33);
+  return fract((p.x+p.y)*p.z);
+}
+float snoise(vec3 p){
+  vec3 i=floor(p), f=fract(p); f=f*f*(3.0-2.0*f);
+  return 2.0*mix(mix(mix(hash3(i),hash3(i+vec3(1,0,0)),f.x),
+    mix(hash3(i+vec3(0,1,0)),hash3(i+vec3(1,1,0)),f.x),f.y),
+    mix(mix(hash3(i+vec3(0,0,1)),hash3(i+vec3(1,0,1)),f.x),
+    mix(hash3(i+vec3(0,1,1)),hash3(i+vec3(1,1,1)),f.x),f.y),f.z)-1.0;
+}
+float radiusAt(vec3 n){
+  float phi=dot(n.xy,n.xy)>0.000000000001 ? atan(n.y,n.x) : 0.0;
+  float a=mod(phi+6.28318530718,6.28318530718)*128.0/6.28318530718;
+  int k=int(floor(a)); float t=fract(a);
+  float p0=uR[(k+127)%128], p1=uR[k%128], p2=uR[(k+1)%128], p3=uR[(k+2)%128];
+  /* Catmull-Rom keeps the outline's curvature continuous, so reflections don't crease. */
+  return p1+0.5*t*(p2-p0+t*(2.0*p0-5.0*p1+4.0*p2-p3+t*(3.0*(p1-p2)+p3-p0)));
+}
+vec3 displaced(vec3 n){
+  vec3 base=vec3(n.xy*radiusAt(n)*uDilate,n.z*uDepth);
+  float rf=radiusAt(n)*uDilate;
+  /* Grow along the pillow's surface normal so spikes stand up from the skin, not lean like thorns. */
+  vec3 dir=normalize(vec3(n.xy/rf,n.z/uDepth)*vec3(uMeanR,uMeanR,uMeanR));
+  float magnet=uMagnet*uLife, spike=uSpike*uLife;
+  float D=0.022*uLife*snoise(n*2.0+uTime*0.22), peak=0.0;
+  /* Like real ferrofluid: the body stays smooth and a crown of spikes rises only where the field is. */
+  float reach=mix(0.62,0.42,magnet);
+  for(int i=0;i<120;i++){
+    float c=dot(n,uS[i]);
+    if(c<0.98877) continue;
+    float w=smoothstep(reach,0.97,dot(uS[i],uMagDir));
+    /* Spikes facing the camera read as pits; let the crown live on the outline. */
+    w*=smoothstep(0.62,0.93,length(uS[i].xy));
+    if(w<=0.0) continue;
+    float cone=max(0.0,1.0-acos(min(c,1.0))/0.15);
+    peak=max(peak,spike*w*(0.30+0.18*magnet*w)*pow(cone,2.2));
+  }
+  D+=peak;
+  vec3 P=base+dir*D*uMeanR;
+  float toward=dot(dir,uMagDir);
+  P+=uMagDir*toward*0.05*uMeanR*magnet*max(0.0,toward)+uLean*uLife;
+  return P;
+}
+void main(){
+  vec3 n=normalize(aDirection);
+  vec3 reference=abs(n.z)<0.9 ? vec3(0,0,1) : vec3(0,1,0);
+  vec3 t1=normalize(cross(reference,n)), t2=cross(n,t1);
+  const float epsilon=0.0035;
+  vec3 P=displaced(n);
+  vec3 P1=displaced(normalize(n*cos(epsilon)+t1*sin(epsilon)));
+  vec3 P2=displaced(normalize(n*cos(epsilon)+t2*sin(epsilon)));
+  vNormal=normalize(cross(P1-P,P2-P)); vPosition=P;
+  gl_Position=vec4(P.xy*2.0/uBox,-P.z/(uDepth*2.2),1.0);
+}
+</script>
+<script id="ferro-fs" type="x-shader/x-fragment">#version 300 es
+precision highp float;
+uniform float uTime;
+in vec3 vNormal, vPosition;
+out vec4 fragColor;
+void main(){
+  vec3 N=normalize(vNormal), V=vec3(0,0,1), R=reflect(-V,N);
+  vec2 slide=vPosition.xy*0.0015;
+  float envGrad=smoothstep(-0.9,0.9,R.y);
+  float band1=pow(clamp(0.5+0.5*sin(R.x*3.2+R.y*2.1+uTime*0.02+slide.x),0.0,1.0),1.5);
+  float band2=pow(clamp(0.5+0.5*cos(R.z*4.5-R.y*2.6+slide.y),0.0,1.0),2.0);
+  float band3=smoothstep(-0.15,0.85,sin(R.y*5.0+R.x*2.2-uTime*0.016+slide.x+slide.y));
+  float env=envGrad*0.20+band1*0.30+band2*0.28+band3*0.60;
+  vec3 L=normalize(vec3(0.45,0.82,0.62)), Hv=normalize(L+V);
+  float NdotH=max(dot(N,Hv),0.0);
+  float spec=pow(NdotH,60.0)*2.0+pow(NdotH,9.0)*0.45;
+  float fres=pow(1.0-max(dot(N,V),0.0),3.5);
+  float h=0.5, base=0.045+pow(clamp(h*0.5+0.5,0.0,1.0),2.0)*0.10;
+  float shine=base+env*(0.30+0.70*fres)+spec;
+  shine=pow(clamp(shine,0.0,1.0),1.05);
+  shine+=(fract(sin(dot(gl_FragCoord.xy,vec2(12.9898,78.233)))*43758.5453)-0.5)*0.018;
+  fragColor=vec4(vec3(clamp(shine,0.0,1.0)),1.0);
+}
+</script>
+<script>
+(function(){
+  var RATE = 1.8;                 /* clips are ~4.8s; play them as a fast sweep */
+  var LAST = 3;
+  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var fwd = [0,1,2].map(function(i){return document.getElementById('f'+i)});
+  var rev = [0,1,2].map(function(i){return document.getElementById('r'+i)});
+  var screens = [].slice.call(document.querySelectorAll('.screen'));
+  var rail = [].slice.call(document.querySelectorAll('.rail button'));
+  var at = 0, busy = false, queue = null, shown = fwd[0];
+  var stage = document.getElementById('stage');
+  /* The drip band's top edge sits at 25% of the clip frame. Lift the film so that edge
+     lands just above the screen top, leaving only the band's underside and drips visible. */
+  function fitLift(){
+    var vw = innerWidth, vh = innerHeight, h = Math.max(vh, vw * 9 / 16), off = (vh - h) / 2;
+    stage.querySelector('.film').style.setProperty('--lift', (-(off + 0.25 * h) - 0.014 * h).toFixed(1) + 'px');
+  }
+  fitLift(); addEventListener('resize', fitLift);
+
+  /* Pixel-only chrome pass: Film 1 still owns every clip, seek, and transition. */
+  var chromeCanvas = document.getElementById('chrome');
+  var chromeMedia = matchMedia('(min-width: 761px)');
+  var chromeMotion = matchMedia('(prefers-reduced-motion: reduce)');
+  var chromeGL = null, chromePasses = null, chromeMaskRT = null, chromeHeightRT = null, chromeDirty = true, chromeTexture = null, chromeRAF = 0, chromeDead = false;
+  var chromeUniforms = null, chromeW = 0, chromeH = 0, chromeCap = 1, chromeScale = 1;
+  var chromeAvg = 16.7, chromeSlow = 0, chromeFast = 0, chromeLastFrame = 0;
+  var chromeLastVideo = null, chromeLastTime = -1, chromeLastScreen = -1, chromeLastRest = -1;
+  var calmByScreen = [1.0,0.18,1.0,0.3], chromeCalm = 1.0, chromeCalmTarget = 1.0, chromeMacroTime = 0;
+  function chromeStop(failed){
+    document.body.classList.remove('chrome-live');
+    ferroStop(false);
+    if (chromeRAF) cancelAnimationFrame(chromeRAF);
+    chromeRAF = 0; chromeLastFrame = 0;
+    if (failed) chromeDead = true;
+  }
+  chromeCanvas.addEventListener('webglcontextlost', function(e){ e.preventDefault(); chromeStop(true); });
+  function chromeShader(type, source){
+    var gl = chromeGL, shader = gl.createShader(type);
+    gl.shaderSource(shader, source); gl.compileShader(shader);
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+      console.error(gl.getShaderInfoLog(shader)); gl.deleteShader(shader); return null;
+    }
+    return shader;
+  }
+  function chromeInit(){
+    try {
+      var gl = chromeGL = chromeCanvas.getContext('webgl',
+        {antialias:false, alpha:false, powerPreference:'high-performance'});
+      if (!gl) return false;
+      var src = document.getElementById('chrome-fs').textContent;
+      var names = ['uRes','uStageSize','uVideoSize','uTime','uMacroTime','uCalm','uScreen','uRest'];
+      function program(pass){
+        var vs = chromeShader(gl.VERTEX_SHADER, 'attribute vec2 p;void main(){gl_Position=vec4(p,0.0,1.0);}');
+        var fs = chromeShader(gl.FRAGMENT_SHADER, '#define ' + pass + '\n' + src);
+        if (!vs || !fs) return null;
+        var pr = gl.createProgram(); gl.attachShader(pr, vs); gl.attachShader(pr, fs);
+        gl.bindAttribLocation(pr, 0, 'p'); gl.linkProgram(pr);
+        if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) { console.error(gl.getProgramInfoLog(pr)); return null; }
+        gl.deleteShader(vs); gl.deleteShader(fs);
+        var u = {program:pr};
+        names.concat(['uVideo','uMask','uHeight']).forEach(function(n){ u[n] = gl.getUniformLocation(pr, n); });
+        gl.useProgram(pr);
+        if (u.uVideo) gl.uniform1i(u.uVideo, 0);
+        if (u.uMask) gl.uniform1i(u.uMask, 1);
+        if (u.uHeight) gl.uniform1i(u.uHeight, 2);
+        return u;
+      }
+      chromePasses = {mask:program('PASS_MASK'), height:program('PASS_HEIGHT'), final:program('PASS_FINAL')};
+      if (!chromePasses.mask || !chromePasses.height || !chromePasses.final) return false;
+      gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]), gl.STATIC_DRAW);
+      gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+      function target(unit){
+        var t = gl.createTexture(); gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, t);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+        var fb = gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, 0);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        return {tex:t, fb:fb, unit:unit, w:1, h:1};
+      }
+      chromeMaskRT = target(1); chromeHeightRT = target(2);
+      chromeTexture = gl.createTexture(); gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, chromeTexture);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+      chromeResize();
+      return true;
+    } catch (error) { console.error(error); return false; }
+  }
+  function chromeSizeRT(rt, w, h){
+    if (rt.w === w && rt.h === h) return;
+    var gl = chromeGL; rt.w = w; rt.h = h;
+    gl.activeTexture(gl.TEXTURE0 + rt.unit); gl.bindTexture(gl.TEXTURE_2D, rt.tex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.activeTexture(gl.TEXTURE0);
+  }
+  function chromeResizeBuffer(){
+    if (!chromeGL) return;
+    /* Final pass is cheap: render at device resolution (up to 3840 wide) so procedural chrome stays sharp on 4K. */
+    var k = Math.min(chromeCap, 3840/Math.max(1,chromeW)) * chromeScale;
+    var w = Math.max(1,Math.floor(chromeW*k)), h = Math.max(1,Math.floor(chromeH*k));
+    if (chromeCanvas.width !== w || chromeCanvas.height !== h) { chromeCanvas.width = w; chromeCanvas.height = h; }
+    chromeSizeRT(chromeMaskRT, Math.max(1,Math.ceil(w*0.75)), Math.max(1,Math.ceil(h*0.75)));
+    chromeSizeRT(chromeHeightRT, Math.max(1,Math.ceil(w/4)), Math.max(1,Math.ceil(h/4)));
+    chromeDirty = true;
+  }
+  function chromeResize(){
+    chromeW = innerWidth; chromeH = innerHeight;
+    chromeCap = Math.min(devicePixelRatio || 1,2);
+    chromeResizeBuffer();
+    if (!chromeMedia.matches) chromeStop(false);
+  }
+  function chromeFrame(now){
+    chromeRAF = 0;
+    if (chromeDead || document.hidden || !chromeMedia.matches || chromeMotion.matches) { chromeStop(false); return; }
+    var gl = chromeGL, v = shown;
+    if (v.readyState < 2 || !v.videoWidth || !v.videoHeight) {
+      document.body.classList.remove('chrome-live');
+      chromeRAF = requestAnimationFrame(chromeFrame); return;
+    }
+    var dt = chromeLastFrame ? now-chromeLastFrame : 16.7; chromeLastFrame = now;
+    chromeCalm += (chromeCalmTarget-chromeCalm)*(1-Math.exp(-Math.min(dt,100)/500));
+    chromeMacroTime += Math.min(dt,100)*0.0006*chromeCalm;
+    if (dt < 100) {
+      chromeAvg += (dt-chromeAvg)*0.06;
+      chromeSlow = chromeAvg > 20 ? chromeSlow+dt : 0;
+      chromeFast = chromeAvg < 14 ? chromeFast+dt : 0;
+      if (chromeSlow >= 500 && chromeScale > 0.55) {
+        chromeScale = Math.max(0.55, +(chromeScale-0.1).toFixed(2));
+        chromeSlow = chromeFast = 0; chromeResizeBuffer();
+      }
+      if (chromeFast >= 2000 && chromeScale < 1) {
+        chromeScale = Math.min(1, +(chromeScale+0.1).toFixed(2));
+        chromeSlow = chromeFast = 0; chromeResizeBuffer();
+      }
+    }
+    if (v !== chromeLastVideo || v.currentTime !== chromeLastTime || at !== chromeLastScreen) {
+      try {
+        gl.activeTexture(gl.TEXTURE0);
+        gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,v);
+      } catch (error) { console.error(error); chromeStop(true); return; }
+      chromeLastVideo = v; chromeLastTime = v.currentTime; chromeLastScreen = at; chromeDirty = true;
+    }
+    try {
+      var t = now*0.0006, rest0 = (at === 0 && v === fwd[0] && v.paused && v.currentTime < 0.02) ? 1 : 0;
+      if (rest0 !== chromeLastRest) { chromeLastRest = rest0; chromeDirty = true; }
+      function draw(u, rt, w, h){
+        gl.useProgram(u.program);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, rt ? rt.fb : null); gl.viewport(0,0,w,h);
+        gl.uniform2f(u.uRes,w,h); gl.uniform2f(u.uStageSize,chromeW,chromeH);
+        gl.uniform2f(u.uVideoSize,v.videoWidth,v.videoHeight);
+        gl.uniform1f(u.uTime,t); gl.uniform1f(u.uMacroTime,chromeMacroTime);
+        gl.uniform1f(u.uCalm,chromeCalm); gl.uniform1f(u.uScreen,at);
+        if (u.uRest) gl.uniform1f(u.uRest,rest0);
+        gl.drawArrays(gl.TRIANGLES,0,6);
+      }
+      if (chromeDirty) { draw(chromePasses.mask, chromeMaskRT, chromeMaskRT.w, chromeMaskRT.h); chromeDirty = false; }
+      draw(chromePasses.height, chromeHeightRT, chromeHeightRT.w, chromeHeightRT.h);
+      draw(chromePasses.final, null, chromeCanvas.width, chromeCanvas.height);
+    } catch (error) { console.error(error); chromeStop(true); return; }
+    document.body.classList.add('chrome-live');
+    ferroMaybeStart();
+    chromeRAF = requestAnimationFrame(chromeFrame);
+  }
+  function chromeStart(){
+    if (chromeDead || chromeRAF || chromeMotion.matches || document.hidden || !chromeMedia.matches) return;
+    if (!chromeGL && !chromeInit()) { chromeStop(true); return; }
+    chromeRAF = requestAnimationFrame(chromeFrame);
+  }
+  addEventListener('resize', function(){ chromeResize(); ferroResize(); chromeStart(); });
+  document.addEventListener('visibilitychange', function(){
+    if (document.hidden) chromeStop(false); else chromeStart();
+  });
+  if (chromeMedia.addEventListener) chromeMedia.addEventListener('change', function(){
+    if (chromeMedia.matches) { chromeResize(); chromeStart(); } else chromeStop(false);
+  });
+  if (chromeMotion.addEventListener) chromeMotion.addEventListener('change', function(){
+    if (chromeMotion.matches) chromeStop(false); else chromeStart();
+  });
+
+  /* Start-only WebGL2 ferrofluid. Film 1 remains the resting/background layer. */
+  var ferroCanvas = document.getElementById('ferro');
+  var ferroGL = null, ferroProgram = null, ferroVAO = null, ferroU = null, ferroCount = 0;
+  var ferroDead = false, ferroRAF = 0, ferroLast = 0, ferroRestReady = false;
+  /* state: 0 off, 1 entering, 2 live, 3 collapsing, 4 fading out */
+  var ferroState = 0, ferroLife = 0, ferroLifeFrom = 0, ferroAge = 0, ferroExitDone = null;
+  var ferroScale = 1, ferroCX = 0, ferroCY = 0, ferroBoxW = 1, ferroBoxH = 1;
+  var ferroMean = 0, ferroMax = 0, ferroDepth = 1, ferroPulseAge = 0, ferroPulseJitter = 1;
+  var ferroWander = Math.random()*20, ferroPointer = false, ferroMouseX = 0, ferroMouseY = 0;
+  /* Interleaved spring position/velocity: spike, magnet, direction xyz, lean xy. */
+  var ferroSprings = new Float64Array(14);
+  var ferroRaw = [171,170,169.5,170.5,169,169,168,166.5,164.5,161.5,159.5,156,150,145.5,142,137,130,123,114,107,101,94.5,87.5,83,79,75.5,72,70,69.5,67.5,67.5,67,67,68,68.5,69.5,71.5,74,77.5,80.5,86.5,94,102,113,126.5,143,156.5,168.5,179.5,187.5,194,198,203,205,208,207.5,205.5,200.5,194,190.5,186.5,179.5,173.5,170,164.5,158.5,150.5,139,133.5,129.5,126,123,120,118.5,115.5,113,110.5,108,108,106.5,105.5,105.5,104.5,104,104,104.5,105,107,108,108,109.5,110,110.5,113,115,117.5,119.5,121.5,125,128,130,132.5,136.5,138.5,141.5,143.5,146,148.5,151,152.5,154.5,156,159.5,161.5,164,165.5,167,166.5,167.5,169,169.5,169.5,170,171,171,171.5,171.5,171];
+  var ferroR = new Float32Array(128), ferroSpikes = new Float32Array(120*3);
+  (function(){
+    var minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (var k = 0; k < 128; k++) {
+      var r = (ferroRaw[(k+126)%128]+4*ferroRaw[(k+127)%128]+6*ferroRaw[k]
+        +4*ferroRaw[(k+1)%128]+ferroRaw[(k+2)%128])/16;
+      ferroR[k] = r; ferroMean += r/128; ferroMax = Math.max(ferroMax,r);
+      var a = k*Math.PI*2/128, x = Math.cos(a)*r, y = Math.sin(a)*r;
+      minX = Math.min(minX,x); maxX = Math.max(maxX,x);
+      minY = Math.min(minY,y); maxY = Math.max(maxY,y);
+    }
+    ferroBoxW = (maxX-minX)*1.9; ferroBoxH = (maxY-minY)*1.9;
+    ferroDepth = 0.55*ferroMean;
+    for (var i = 0; i < 120; i++) {
+      var z = 1-2*(i+0.5)/120, radial = Math.sqrt(1-z*z), angle = i*Math.PI*(3-Math.sqrt(5));
+      ferroSpikes[i*3] = Math.cos(angle)*radial;
+      ferroSpikes[i*3+1] = Math.sin(angle)*radial; ferroSpikes[i*3+2] = z;
+    }
+    ferroRaw = null;
+  })();
+  function ferroStop(failed){
+    document.body.classList.remove('ferro-on'); document.body.classList.remove('ferro-plate');
+    if (ferroRAF) cancelAnimationFrame(ferroRAF);
+    ferroRAF = 0; ferroLast = 0; ferroState = 0;
+    if (failed) ferroDead = true;
+    /* Never strand navigation if visibility, a media change, or context loss interrupts exit. */
+    var done = ferroExitDone; ferroExitDone = null;
+    if (done) done();
+  }
+  ferroCanvas.addEventListener('webglcontextlost', function(e){ e.preventDefault(); ferroStop(true); });
+  function ferroShader(type, source){
+    var gl = ferroGL, shader = gl.createShader(type);
+    gl.shaderSource(shader,source); gl.compileShader(shader);
+    var log = gl.getShaderInfoLog(shader); if (log) console.error(log);
+    if (!gl.getShaderParameter(shader,gl.COMPILE_STATUS)) { gl.deleteShader(shader); return null; }
+    return shader;
+  }
+  function ferroInit(){
+    try {
+      var gl = ferroGL = ferroCanvas.getContext('webgl2',
+        {antialias:true,alpha:true,premultipliedAlpha:true,powerPreference:'high-performance'});
+      if (!gl) return false;
+      var vs = ferroShader(gl.VERTEX_SHADER,document.getElementById('ferro-vs').textContent);
+      var fs = ferroShader(gl.FRAGMENT_SHADER,document.getElementById('ferro-fs').textContent);
+      if (!vs || !fs) return false;
+      var pr = ferroProgram = gl.createProgram();
+      gl.attachShader(pr,vs); gl.attachShader(pr,fs); gl.linkProgram(pr);
+      var log = gl.getProgramInfoLog(pr); if (log) console.error(log);
+      gl.deleteShader(vs); gl.deleteShader(fs);
+      if (!gl.getProgramParameter(pr,gl.LINK_STATUS)) return false;
+      gl.useProgram(pr); ferroU = {};
+      ['uMeanR','uDepth','uDilate','uTime','uSpike','uMagnet','uLife','uMagDir','uLean','uBox'].forEach(function(n){
+        ferroU[n] = gl.getUniformLocation(pr,n);
+      });
+      gl.uniform1fv(gl.getUniformLocation(pr,'uR[0]'),ferroR);
+      gl.uniform3fv(gl.getUniformLocation(pr,'uS[0]'),ferroSpikes);
+      gl.uniform1f(ferroU.uMeanR,ferroMean); gl.uniform1f(ferroU.uDepth,ferroDepth);
+      gl.uniform1f(ferroU.uDilate,1.03); gl.uniform2f(ferroU.uBox,ferroBoxW,ferroBoxH);
+
+      /* Shared edge midpoints give 163,842 unit directions after seven subdivisions (sharp spike tips on 4K). */
+      var t = (1+Math.sqrt(5))/2;
+      var vertices = [-1,t,0, 1,t,0, -1,-t,0, 1,-t,0, 0,-1,t, 0,1,t,
+        0,-1,-t, 0,1,-t, t,0,-1, t,0,1, -t,0,-1, -t,0,1];
+      for (var v = 0; v < vertices.length; v += 3) {
+        var length = Math.hypot(vertices[v],vertices[v+1],vertices[v+2]);
+        vertices[v] /= length; vertices[v+1] /= length; vertices[v+2] /= length;
+      }
+      var faces = [0,11,5, 0,5,1, 0,1,7, 0,7,10, 0,10,11,
+        1,5,9, 5,11,4, 11,10,2, 10,7,6, 7,1,8,
+        3,9,4, 3,4,2, 3,2,6, 3,6,8, 3,8,9,
+        4,9,5, 2,4,11, 6,2,10, 8,6,7, 9,8,1];
+      for (var level = 0; level < 7; level++) {
+        var edges = new Map(), next = [];
+        function midpoint(a,b){
+          var key = Math.min(a,b)+','+Math.max(a,b), cached = edges.get(key);
+          if (cached !== undefined) return cached;
+          var x = vertices[a*3]+vertices[b*3], y = vertices[a*3+1]+vertices[b*3+1];
+          var z = vertices[a*3+2]+vertices[b*3+2], len = Math.hypot(x,y,z), index = vertices.length/3;
+          vertices.push(x/len,y/len,z/len); edges.set(key,index); return index;
+        }
+        for (var f = 0; f < faces.length; f += 3) {
+          var a = faces[f], b = faces[f+1], c = faces[f+2];
+          var ab = midpoint(a,b), bc = midpoint(b,c), ca = midpoint(c,a);
+          next.push(a,ab,ca, b,bc,ab, c,ca,bc, ab,bc,ca);
+        }
+        faces = next;
+      }
+      ferroCount = faces.length; ferroVAO = gl.createVertexArray(); gl.bindVertexArray(ferroVAO);
+      gl.bindBuffer(gl.ARRAY_BUFFER,gl.createBuffer());
+      gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(vertices),gl.STATIC_DRAW);
+      gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0,3,gl.FLOAT,false,0,0);
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,gl.createBuffer());
+      gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,new Uint32Array(faces),gl.STATIC_DRAW);
+      gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LESS); gl.disable(gl.CULL_FACE);
+      gl.clearColor(0,0,0,0); ferroResize();
+      if (gl.getError() !== gl.NO_ERROR) { console.error('Ferrofluid WebGL2 initialization failed'); return false; }
+      return true;
+    } catch (error) { console.error(error); return false; }
+  }
+  function ferroResize(){
+    if (!ferroGL || ferroDead) return;
+    var w = innerWidth, h = innerHeight;
+    ferroScale = Math.max(w/1280,h/720);
+    ferroCX = (w-1280*ferroScale)*0.62+796.4*ferroScale;
+    ferroCY = (h-720*ferroScale)*0.5+422.7*ferroScale;
+    var cssW = ferroBoxW*ferroScale, cssH = ferroBoxH*ferroScale;
+    ferroCanvas.style.left = (ferroCX-cssW/2)+'px'; ferroCanvas.style.top = (ferroCY-cssH/2)+'px';
+    ferroCanvas.style.width = cssW+'px'; ferroCanvas.style.height = cssH+'px';
+    var dpr = Math.min(devicePixelRatio || 1,2);
+    var budget = Math.min(1,Math.sqrt(4500000/(cssW*cssH*dpr*dpr)));
+    var bw = Math.max(1,Math.floor(cssW*dpr*budget)), bh = Math.max(1,Math.floor(cssH*dpr*budget));
+    if (ferroCanvas.width !== bw) ferroCanvas.width = bw;
+    if (ferroCanvas.height !== bh) ferroCanvas.height = bh;
+  }
+  function ferroSpring(index,target,omega,dt){
+    var state = ferroSprings, y = state[index]-target, velocity = state[index+1];
+    var j = velocity+omega*y, decay = Math.exp(-omega*dt);
+    state[index] = target+(y+j*dt)*decay;
+    state[index+1] = (velocity-omega*j*dt)*decay;
+  }
+  function ferroSmooth(t){ t = Math.max(0,Math.min(1,t)); return t*t*(3-2*t); }
+  function ferroDynamics(dt){
+    ferroPulseAge += dt;
+    if (ferroPulseAge >= 5.9*ferroPulseJitter) {
+      ferroPulseAge -= 5.9*ferroPulseJitter; ferroPulseJitter = 0.85+Math.random()*0.3;
+    }
+    var phase = ferroPulseAge/ferroPulseJitter, pulse = 0.0;
+    if (phase >= 2.4 && phase < 3.3) pulse += 0.7*ferroSmooth((phase-2.4)/0.9);
+    else if (phase >= 3.3 && phase < 4.8) pulse = 0.7;
+    else if (phase >= 4.8) pulse = 0.7-0.7*ferroSmooth((phase-4.8)/1.1);
+    ferroWander += dt;
+    var mx = ferroPointer ? (ferroMouseX-ferroCX)/ferroScale : 0;
+    var my = ferroPointer ? (ferroCY-ferroMouseY)/ferroScale : 0;
+    var distance = Math.hypot(mx,my), lift = 1-ferroSmooth(distance/(0.7*ferroMax));
+    /* Pointer over the body: the field pulls up and out, toward the top edge, never straight at the viewer. */
+    my += lift*0.7*ferroMax;
+    var mz = 0.25*ferroDepth, length = Math.hypot(mx,my,mz);
+    var proximity = ferroPointer ? 1-ferroSmooth((distance-0.7*ferroMax)/(2.7*ferroMax)) : 0;
+    /* With no pointer nearby, an invisible magnet drifts around the front, so the spikes gather and wander. */
+    var wa = ferroWander*0.31, wx = Math.cos(wa)*0.75+Math.sin(ferroWander*0.13)*0.2, wy = Math.sin(wa*1.27)*0.55;
+    var wl = Math.hypot(wx,wy,0.2), mdx = mx/length, mdy = my/length, mdz = mz/length;
+    var dx = wx/wl+(mdx-wx/wl)*proximity, dy = wy/wl+(mdy-wy/wl)*proximity, dz = 0.2/wl+(mdz-0.2/wl)*proximity;
+    var dl = Math.hypot(dx,dy,dz) || 1;
+    ferroSpring(2,0.72+0.28*proximity,4,dt);
+    var magnet = Math.max(0,Math.min(1,ferroSprings[2]));
+    ferroSpring(0,Math.max(pulse,proximity > 0 ? 0.35+0.55*proximity : pulse),9,dt);
+    ferroSpring(4,dx/dl,3.5,dt); ferroSpring(6,dy/dl,3.5,dt); ferroSpring(8,dz/dl,3.5,dt);
+    var ml = Math.hypot(mx,my), lean = ml > 0.0001 ? 0.035*ferroMean*proximity/ml : 0;
+    ferroSpring(10,mx*lean,6,dt); ferroSpring(12,my*lean,6,dt);
+  }
+  function ferroDraw(now){
+    var gl = ferroGL, u = ferroU, state = ferroSprings;
+    var length = Math.hypot(state[4],state[6],state[8]) || 1;
+    gl.useProgram(ferroProgram); gl.bindVertexArray(ferroVAO);
+    gl.viewport(0,0,ferroCanvas.width,ferroCanvas.height);
+    gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+    gl.uniform1f(u.uTime,now*0.001); gl.uniform1f(u.uLife,ferroLife);
+    gl.uniform1f(u.uSpike,state[0]); gl.uniform1f(u.uMagnet,Math.max(0,Math.min(1,state[2])));
+    gl.uniform3f(u.uMagDir,state[4]/length,state[6]/length,state[8]/length);
+    gl.uniform3f(u.uLean,state[10],state[12],0);
+    gl.drawElements(gl.TRIANGLES,ferroCount,gl.UNSIGNED_INT,0);
+  }
+  function ferroFrame(now){
+    ferroRAF = 0;
+    if (ferroDead || document.hidden || at !== 0 || !chromeMedia.matches || chromeMotion.matches
+      || !document.body.classList.contains('chrome-live')) { ferroStop(false); return; }
+    var dt = ferroLast ? Math.min(0.05,Math.max(0,(now-ferroLast)*0.001)) : 1/60;
+    ferroLast = now; ferroAge += dt;
+    if (ferroState === 1) {
+      /* Fade in at the exact filmed silhouette, swap the plate in underneath, then come alive. */
+      var grow = Math.max(0,ferroAge-0.5);
+      if (ferroAge >= 0.5) document.body.classList.add('ferro-plate');
+      ferroLife = 1-Math.pow(1-Math.min(1,grow/0.9),3);
+      if (grow >= 0.9) { ferroLife = 1; ferroState = 2; }
+    } else if (ferroState === 3) {
+      ferroLife = ferroLifeFrom*(1-ferroSmooth(ferroAge/0.22));
+      if (ferroAge >= 0.22) {
+        /* Back on the filmed silhouette: put the filmed bean back underneath and fade the blob over it. */
+        ferroLife = 0; ferroState = 4; ferroAge = 0;
+        document.body.classList.remove('ferro-plate');
+        document.body.classList.remove('ferro-on');
+      }
+    } else if (ferroState === 4 && ferroAge >= 0.17) {
+      var done = ferroExitDone; ferroExitDone = null; if (done) done();
+      ferroStop(false); return;
+    }
+    if (ferroState !== 4) ferroDynamics(dt);
+    try { ferroDraw(now); } catch (error) { console.error(error); ferroStop(true); return; }
+    ferroRAF = requestAnimationFrame(ferroFrame);
+  }
+  function ferroMaybeStart(){
+    if (ferroState || ferroDead || !ferroRestReady || at !== 0 || busy || document.hidden
+      || !chromeMedia.matches || chromeMotion.matches || !document.body.classList.contains('chrome-live')
+      || shown !== fwd[0] || shown.readyState < 2 || shown.seeking || shown.currentTime > 0.01) return;
+    if (!ferroGL && !ferroInit()) { ferroStop(true); return; }
+    ferroSprings.fill(0); ferroSprings[0] = 0; ferroSprings[2] = 0.72; ferroSprings[8] = 1;
+    ferroPulseAge = 0; ferroPulseJitter = 0.85+Math.random()*0.3;
+    ferroLife = 0; ferroAge = 0; ferroLast = 0;
+    try {
+      ferroDraw(performance.now());
+      if (ferroGL.getError() !== ferroGL.NO_ERROR) throw new Error('Ferrofluid WebGL2 draw failed');
+    } catch (error) { console.error(error); ferroStop(true); return; }
+    ferroState = 1; document.body.classList.add('ferro-on');
+    ferroRAF = requestAnimationFrame(ferroFrame);
+  }
+  function ferroArrive(){ if (at === 0) { ferroRestReady = true; ferroMaybeStart(); } }
+  function ferroLeave(done){
+    ferroRestReady = false; ferroLifeFrom = ferroLife; ferroAge = 0;
+    ferroState = 3; ferroExitDone = done;
+  }
+  addEventListener('pointermove', function(e){ ferroPointer = true; ferroMouseX = e.clientX; ferroMouseY = e.clientY; }, {passive:true});
+  function ferroClearPointer(){ ferroPointer = false; }
+  addEventListener('pointerleave',ferroClearPointer);
+  addEventListener('blur',ferroClearPointer);
+  document.addEventListener('mouseout',function(e){ if (e.relatedTarget === null) ferroClearPointer(); });
+  chromeStart();
+
+  function preloadNear(i){
+    fwd.concat(rev).forEach(function(v, n){
+      var needed = n < 3 ? Math.abs(n - i) <= 1 : Math.abs(n - 2 - i) <= 1;
+      v.preload = needed ? 'auto' : 'metadata';
+    });
+  }
+  function railTo(i){ rail.forEach(function(b,k){ b.setAttribute('aria-current', k === i ? 'true' : 'false'); }); }
+  function pause(ms){ return new Promise(function(res){ setTimeout(res, ms); }); }
+  var cover = document.getElementById('jumpCover');
+  function seek(v, t){
+    return new Promise(function(res){
+      if (Math.abs(v.currentTime - t) < 0.01 && v.readyState >= 2) return res();
+      v.addEventListener('seeked', function(){ res(); }, {once:true});
+      v.currentTime = t;
+    });
+  }
+  function ready(v){
+    if (v.readyState >= 2) return Promise.resolve();
+    /* iOS often ignores preload; ask for the clip explicitly */
+    return new Promise(function(res){ v.addEventListener('loadeddata', res, {once:true}); if (v.networkState !== 2) v.load(); });
+  }
+  function show(v){ v.classList.add('on'); if (shown && shown !== v) shown.classList.remove('on'); shown = v; }
+  function play(v){
+    return new Promise(function(res){
+      if (reduce) { seek(v, v.duration - 0.05).then(res); return; }
+      v.playbackRate = RATE;
+      v.addEventListener('ended', function(){ res(); }, {once:true});
+      var p = v.play(); if (p && p.catch) p.catch(function(){ seek(v, v.duration - 0.05).then(res); });
+    });
+  }
+  /* The resting frame for each screen: start of its outgoing clip, or the end of the last clip. */
+  function rest(i){
+    if (i < LAST) return ready(fwd[i]).then(function(){ return seek(fwd[i], 0); }).then(function(){ show(fwd[i]); });
+    var v = fwd[LAST-1];
+    return ready(v).then(function(){ return seek(v, v.duration - 0.05); }).then(function(){ show(v); });
+  }
+  function setScreen(i, dir){
+    screens.forEach(function(s, k){
+      s.classList.remove('leaving','up');
+      if (k === at && k !== i && dir) {
+        s.style.setProperty('--wipe', (reduce ? .01 : 4.8 / RATE * .55) + 's');
+        s.classList.add('leaving'); if (dir < 0) s.classList.add('up');
+      }
+      if (k === i) s.classList.add('on'); else s.classList.remove('on');
+    });
+    if (i >= 0) railTo(queue !== null ? queue : i);
+    document.body.classList.toggle('dark', i === 1);
+    if (i >= 0) { window.__screen = i; preloadNear(i); [].forEach.call(document.querySelectorAll('.mode a'), function(a){ a.href = '../' + a.getAttribute('data-v') + '/?s=' + i; }); }
+  }
+
+  function step(dir){
+    var from = at, to = at + dir;
+    if (to < 0 || to > LAST) return Promise.resolve();
+    chromeCalmTarget = calmByScreen[to];
+    var clip = dir > 0 ? fwd[from] : rev[to];
+    setScreen(-1, dir);           /* wipe the current text away with the wave */
+    stage.style.setProperty('--lt', (reduce ? 0 : 4.84 / RATE) + 's');
+    stage.classList.toggle('lift', to === 2);   /* glide in step with the clip */
+    return ready(clip).then(function(){ return seek(clip, 0); })
+      .then(function(){ show(clip); return play(clip); })
+      .then(function(){
+        at = to;
+        /* after the last forward clip, its final frame is the resting frame */
+        if (!(dir > 0 && to === LAST)) return rest(to);
+      })
+      .then(function(){ setScreen(at, 0); screens[at].classList.remove('leaving'); ferroArrive(); });
+  }
+  function jump(to){
+    chromeCalmTarget = calmByScreen[to];
+    var v = fwd[Math.min(to, LAST - 1)];
+    var frame = ready(v).then(function(){ return seek(v, to === LAST ? v.duration - 0.05 : 0); });
+    if (reduce) {
+      return frame.then(function(){
+        document.body.classList.add('jumping'); show(v); stage.classList.toggle('lift', to === 2);
+        at = to; setScreen(to, 0); document.body.classList.remove('jumping'); ferroArrive();
+      });
+    }
+    document.body.classList.add('jumping'); cover.style.opacity = '1';
+    return Promise.all([pause(160), frame]).then(function(){
+      show(v); stage.classList.toggle('lift', to === 2);
+      at = to; setScreen(to, 0);
+      cover.style.transitionDuration = '240ms'; cover.style.opacity = '0';
+      return pause(240);
+    }).then(function(){ document.body.classList.remove('jumping'); cover.style.transitionDuration = '160ms'; ferroArrive(); });
+  }
+  function go(target){
+    target = Math.max(0, Math.min(LAST, target));
+    railTo(target);
+    if (busy) { queue = target; return; }
+    if (target === at) return;
+    if (at === 0 && (ferroState === 1 || ferroState === 2)
+      && document.body.classList.contains('ferro-on')) {
+      busy = true;
+      ferroLeave(function(){ busy = false; go(target); });
+      return;
+    }
+    ferroRestReady = false;
+    busy = true;
+    (Math.abs(target - at) > 1 ? jump(target) : step(target > at ? 1 : -1)).then(function(){
+      busy = false;
+      var next = queue; queue = null;
+      if (next !== null && next !== at) go(next); else { railTo(at); ferroMaybeStart(); }
+    });
+  }
+
+  /* input: wheel, touch, keys, buttons */
+  var lastWheelEvent = -Infinity;
+  addEventListener('wheel', function(e){
+    e.preventDefault();
+    var now = performance.now();
+    var quietFor = now - lastWheelEvent;
+    lastWheelEvent = now;
+    if (quietFor < 180 || busy || e.deltaY === 0) return;
+    go(at + (e.deltaY > 0 ? 1 : -1));
+  }, {passive:false});
+  /* touch: own the whole gesture, or iOS turns it into a page pan and cancels touchend */
+  var tx = 0, ty = 0, lx = 0, ly = 0, touching = false;
+  addEventListener('touchstart', function(e){ touching = true; tx = lx = e.touches[0].clientX; ty = ly = e.touches[0].clientY; }, {passive:true});
+  addEventListener('touchmove', function(e){
+    lx = e.touches[0].clientX; ly = e.touches[0].clientY;
+    if (e.cancelable) e.preventDefault();
+  }, {passive:false});
+  function swipe(){
+    if (!touching) return; touching = false;
+    var dx = lx - tx, dy = ly - ty;
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40 && at === 2) { slide(dx < 0 ? 1 : -1); return; }
+    if (Math.abs(dy) > 40) go(at + (dy < 0 ? 1 : -1));
+  }
+  addEventListener('touchend', function(e){ var c = e.changedTouches[0]; if (c) { lx = c.clientX; ly = c.clientY; } swipe(); }, {passive:true});
+  addEventListener('touchcancel', swipe, {passive:true});
+  addEventListener('keydown', function(e){
+    if (['ArrowDown','PageDown',' '].indexOf(e.key) > -1) { e.preventDefault(); go(at + 1); }
+    else if (['ArrowUp','PageUp'].indexOf(e.key) > -1) { e.preventDefault(); go(at - 1); }
+    else if (at === 2 && e.key === 'ArrowRight') slide(1);
+    else if (at === 2 && e.key === 'ArrowLeft') slide(-1);
+  });
+  document.addEventListener('click', function(e){
+    var b = e.target.closest('[data-go]'); if (b) go(+b.getAttribute('data-go'));
+  });
+
+  /* projects carousel */
+  var P = (window.PROTO_PROJECTS || []), pi = 0;
+  var shot = document.getElementById('shot');
+  function render(){
+    var p = P[pi]; if (!p) return;
+    shot.innerHTML = '';
+    if (p.image) { var img = new Image(); img.src = '../' + p.image; img.alt = p.label; shot.appendChild(img); }
+    else { var n = document.createElement('div'); n.className = 'name'; n.textContent = p.label; shot.appendChild(n); }
+    document.getElementById('pLabel').textContent = p.label;
+    document.getElementById('pStatus').textContent = p.status;
+    document.getElementById('pDesc').textContent = p.description;
+    var a = document.getElementById('pLink'); a.hidden = !p.url; if (p.url) a.href = p.url;
+    document.getElementById('pCount').textContent = (pi + 1) + ' / ' + P.length;
+  }
+  function slide(d){ if (!P.length) return; pi = (pi + d + P.length) % P.length; render(); }
+  document.getElementById('prev').onclick = function(){ slide(-1); };
+  document.getElementById('next').onclick = function(){ slide(1); };
+  render();
+
+  /* ?s=N opens on screen N (used by the Film / 3D switch) */
+  at = Math.max(0, Math.min(LAST, parseInt(new URLSearchParams(location.search).get('s'), 10) || 0));
+  chromeCalm = chromeCalmTarget = calmByScreen[at];
+  stage.style.setProperty('--lt', '0s'); stage.classList.toggle('lift', at === 2);
+  setScreen(at, 0); rest(at).then(ferroArrive);
+})();
+</script>
+</body>
+</html>
