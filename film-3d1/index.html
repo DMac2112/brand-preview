@@ -181,6 +181,9 @@
 <script id="chrome-fs" type="x-shader/x-fragment">
 precision highp float;
 uniform sampler2D uVideo;
+#ifdef PASS_FINAL
+uniform sampler2D uMask, uHeight;
+#endif
 uniform vec2 uRes, uVideoSize, uStageSize;
 uniform float uTime, uMacroTime, uCalm, uScreen;
 
@@ -224,6 +227,8 @@ float rawMask(vec2 uv,vec2 dx,vec2 dy){
 float coverageSample(vec2 uv){
   return smoothstep(0.17,0.30,0.922-lum(texture2D(uVideo,uv).rgb));
 }
+#ifdef PASS_MASK
+/* Runs only when a new video frame arrives: metal mask, coverage and blurred video gradient. */
 void main(){
   vec2 screenUV=gl_FragCoord.xy/uRes;
   /* CSS object-fit:cover and object-position:62% 50%, in bottom-origin coordinates. */
@@ -255,21 +260,47 @@ void main(){
     +coverageSample(uv+fill*0.7071)+coverageSample(uv-fill*0.7071)
     +coverageSample(uv+vec2(fill.x,-fill.y)*0.7071)+coverageSample(uv+vec2(-fill.x,fill.y)*0.7071))/8.0;
   m=max(m,smoothstep(0.62,0.88,big)*step(0.5,uScreen)*(1.0-step(1.5,uScreen)));
-  if(m<=0.001){ gl_FragColor=vec4(c,1.0); return; }
 
   /* Differentiate blurred luminance, rather than the video texture's pixel detail. */
   vec2 gx=dx*2.4, gy=dy*2.4;
   vec2 videoGrad=vec2(blurredVideoLum(uv+gx,gx,gy)-blurredVideoLum(uv-gx,gx,gy),
                       blurredVideoLum(uv+gy,gx,gy)-blurredVideoLum(uv-gy,gx,gy));
-  vec2 p=(screenUV-0.5)*vec2(uStageSize.x/uStageSize.y,1.0)*0.85;
-  vec2 eps=vec2(0.025,0.0);
   vec2 reach=vec2(110.0/uStageSize.x/cover.x,110.0/uStageSize.y/cover.y);
   float coverage=(m+coverageSample(uv-vec2(reach.x,0.0))+coverageSample(uv+vec2(reach.x,0.0))
     +coverageSample(uv-vec2(0.0,reach.y))+coverageSample(uv+vec2(0.0,reach.y)))/5.0;
-  float normalScale=mix(0.7,0.4,smoothstep(0.35,0.8,coverage));
+  gl_FragColor=vec4(m,coverage,clamp(videoGrad*0.5+0.5,0.0,1.0));
+}
+#endif
+#ifdef PASS_HEIGHT
+/* Low-resolution Command Centre height field: height plus slopes, packed. */
+void main(){
+  vec2 screenUV=gl_FragCoord.xy/uRes;
+  vec2 p=(screenUV-0.5)*vec2(uStageSize.x/uStageSize.y,1.0)*0.85;
+  vec2 eps=vec2(0.025,0.0);
   float h=heightSoft(p,uMacroTime*0.4), hx=heightSoft(p+eps.xy,uMacroTime*0.4), hy=heightSoft(p+eps.yx,uMacroTime*0.4);
-  vec3 N=normalize(vec3((h-hx)/eps.x*0.58*normalScale*uCalm-videoGrad.x*1.7,
-                         (h-hy)/eps.x*0.58*normalScale*uCalm-videoGrad.y*1.7,0.72));
+  gl_FragColor=vec4(clamp(h*0.5+0.5,0.0,1.0),clamp(vec2(h-hx,h-hy)/eps.x*0.58/12.0+0.5,0.0,1.0),1.0);
+}
+#endif
+#ifdef PASS_FINAL
+void main(){
+  vec2 screenUV=gl_FragCoord.xy/uRes;
+  /* CSS object-fit:cover and object-position:62% 50%, in bottom-origin coordinates. */
+  float coverScale=max(uStageSize.x/uVideoSize.x,uStageSize.y/uVideoSize.y);
+  vec2 cover=uVideoSize*coverScale/uStageSize;
+  vec2 origin=(vec2(1.0)-cover)*vec2(0.62,0.5);
+  vec2 uv=(screenUV-origin)/cover;
+  vec3 c=texture2D(uVideo,uv).rgb;
+  vec2 qa=screenUV*vec2(1440.0,900.0);
+  vec4 mk=texture2D(uMask,screenUV);
+  float m=mk.r;
+  if(m<=0.004){ gl_FragColor=vec4(c,1.0); return; }
+  float coverage=mk.g; vec2 videoGrad=mk.ba*2.0-1.0;
+  vec2 p=(screenUV-0.5)*vec2(uStageSize.x/uStageSize.y,1.0)*0.85;
+  float normalScale=mix(0.7,0.4,smoothstep(0.35,0.8,coverage));
+  vec3 hs=texture2D(uHeight,screenUV).rgb;
+  float h=hs.r*2.0-1.0; vec2 slope=(hs.gb-0.5)*12.0;
+  vec3 N=normalize(vec3(slope.x*normalScale*uCalm-videoGrad.x*1.7,
+                         slope.y*normalScale*uCalm-videoGrad.y*1.7,0.72));
   vec3 V=normalize(vec3(p*0.15,1.0)); vec3 R=reflect(-V,N);
   float fullMetal=smoothstep(0.55,0.9,coverage);
   float neutral=step(0.5,uScreen)*(1.0-step(1.5,uScreen));
@@ -305,6 +336,7 @@ void main(){
   result=mix(result,vec3(lum(result)),max(neutral,m));
   gl_FragColor=vec4(result,1.0);
 }
+#endif
 </script>
 <script>
 (function(){
@@ -329,10 +361,10 @@ void main(){
   var chromeCanvas = document.getElementById('chrome');
   var chromeMedia = matchMedia('(min-width: 761px)');
   var chromeMotion = matchMedia('(prefers-reduced-motion: reduce)');
-  var chromeGL = null, chromeProgram = null, chromeTexture = null, chromeRAF = 0, chromeDead = false;
+  var chromeGL = null, chromePasses = null, chromeMaskRT = null, chromeHeightRT = null, chromeDirty = true, chromeTexture = null, chromeRAF = 0, chromeDead = false;
   var chromeUniforms = null, chromeW = 0, chromeH = 0, chromeCap = 1, chromeScale = 1;
   var chromeAvg = 16.7, chromeSlow = 0, chromeFast = 0, chromeLastFrame = 0;
-  var chromeLastVideo = null, chromeLastTime = -1;
+  var chromeLastVideo = null, chromeLastTime = -1, chromeLastScreen = -1;
   var calmByScreen = [1.0,0.18,1.0,0.3], chromeCalm = 1.0, chromeCalmTarget = 1.0, chromeMacroTime = 0;
   function chromeStop(failed){
     document.body.classList.remove('chrome-live');
@@ -354,50 +386,72 @@ void main(){
       var gl = chromeGL = chromeCanvas.getContext('webgl',
         {antialias:false, alpha:false, powerPreference:'high-performance'});
       if (!gl) return false;
-      var vs = chromeShader(gl.VERTEX_SHADER, 'attribute vec2 p;void main(){gl_Position=vec4(p,0.0,1.0);}');
-      var fs = chromeShader(gl.FRAGMENT_SHADER, document.getElementById('chrome-fs').textContent);
-      if (!vs || !fs) return false;
-      chromeProgram = gl.createProgram(); gl.attachShader(chromeProgram, vs); gl.attachShader(chromeProgram, fs);
-      gl.linkProgram(chromeProgram);
-      if (!gl.getProgramParameter(chromeProgram, gl.LINK_STATUS)) {
-        console.error(gl.getProgramInfoLog(chromeProgram)); return false;
+      var src = document.getElementById('chrome-fs').textContent;
+      var names = ['uRes','uStageSize','uVideoSize','uTime','uMacroTime','uCalm','uScreen'];
+      function program(pass){
+        var vs = chromeShader(gl.VERTEX_SHADER, 'attribute vec2 p;void main(){gl_Position=vec4(p,0.0,1.0);}');
+        var fs = chromeShader(gl.FRAGMENT_SHADER, '#define ' + pass + '\n' + src);
+        if (!vs || !fs) return null;
+        var pr = gl.createProgram(); gl.attachShader(pr, vs); gl.attachShader(pr, fs);
+        gl.bindAttribLocation(pr, 0, 'p'); gl.linkProgram(pr);
+        if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) { console.error(gl.getProgramInfoLog(pr)); return null; }
+        gl.deleteShader(vs); gl.deleteShader(fs);
+        var u = {program:pr};
+        names.concat(['uVideo','uMask','uHeight']).forEach(function(n){ u[n] = gl.getUniformLocation(pr, n); });
+        gl.useProgram(pr);
+        if (u.uVideo) gl.uniform1i(u.uVideo, 0);
+        if (u.uMask) gl.uniform1i(u.uMask, 1);
+        if (u.uHeight) gl.uniform1i(u.uHeight, 2);
+        return u;
       }
-      gl.deleteShader(vs); gl.deleteShader(fs); gl.useProgram(chromeProgram);
+      chromePasses = {mask:program('PASS_MASK'), height:program('PASS_HEIGHT'), final:program('PASS_FINAL')};
+      if (!chromePasses.mask || !chromePasses.height || !chromePasses.final) return false;
       gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
       gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]), gl.STATIC_DRAW);
-      var p = gl.getAttribLocation(chromeProgram, 'p');
-      gl.enableVertexAttribArray(p); gl.vertexAttribPointer(p, 2, gl.FLOAT, false, 0, 0);
-      chromeUniforms = {
-        res:gl.getUniformLocation(chromeProgram,'uRes'),
-        stage:gl.getUniformLocation(chromeProgram,'uStageSize'),
-        video:gl.getUniformLocation(chromeProgram,'uVideoSize'),
-        time:gl.getUniformLocation(chromeProgram,'uTime'),
-        macroTime:gl.getUniformLocation(chromeProgram,'uMacroTime'),
-        calm:gl.getUniformLocation(chromeProgram,'uCalm'),
-        screen:gl.getUniformLocation(chromeProgram,'uScreen')
-      };
+      gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+      function target(unit){
+        var t = gl.createTexture(); gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, t);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+        var fb = gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, 0);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        return {tex:t, fb:fb, unit:unit, w:1, h:1};
+      }
+      chromeMaskRT = target(1); chromeHeightRT = target(2);
       chromeTexture = gl.createTexture(); gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, chromeTexture);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
       gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-      gl.uniform1i(gl.getUniformLocation(chromeProgram,'uVideo'), 0);
       chromeResize();
       return true;
     } catch (error) { console.error(error); return false; }
   }
+  function chromeSizeRT(rt, w, h){
+    if (rt.w === w && rt.h === h) return;
+    var gl = chromeGL; rt.w = w; rt.h = h;
+    gl.activeTexture(gl.TEXTURE0 + rt.unit); gl.bindTexture(gl.TEXTURE_2D, rt.tex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.activeTexture(gl.TEXTURE0);
+  }
   function chromeResizeBuffer(){
     if (!chromeGL) return;
-    var w = Math.max(1,Math.floor(chromeW*chromeCap*chromeScale));
-    var h = Math.max(1,Math.floor(chromeH*chromeCap*chromeScale));
-    if (chromeCanvas.width !== w || chromeCanvas.height !== h) {
-      chromeCanvas.width = w; chromeCanvas.height = h; chromeGL.viewport(0,0,w,h);
-    }
+    /* The film is 1280x720: rendering above ~1x the stage adds cost and no detail. */
+    var k = Math.min(chromeCap, 1600/Math.max(1,chromeW)) * chromeScale;
+    var w = Math.max(1,Math.floor(chromeW*k)), h = Math.max(1,Math.floor(chromeH*k));
+    if (chromeCanvas.width !== w || chromeCanvas.height !== h) { chromeCanvas.width = w; chromeCanvas.height = h; }
+    chromeSizeRT(chromeMaskRT, Math.max(1,Math.ceil(w*0.75)), Math.max(1,Math.ceil(h*0.75)));
+    chromeSizeRT(chromeHeightRT, Math.max(1,Math.ceil(w/4)), Math.max(1,Math.ceil(h/4)));
+    chromeDirty = true;
   }
   function chromeResize(){
     chromeW = innerWidth; chromeH = innerHeight;
-    chromeCap = Math.min(devicePixelRatio || 1,1.25);
+    chromeCap = Math.min(devicePixelRatio || 1,1);
     chromeResizeBuffer();
     if (!chromeMedia.matches) chromeStop(false);
   }
@@ -425,23 +479,27 @@ void main(){
         chromeSlow = chromeFast = 0; chromeResizeBuffer();
       }
     }
-    if (v !== chromeLastVideo || v.currentTime !== chromeLastTime || (!v.paused && !v.ended)) {
+    if (v !== chromeLastVideo || v.currentTime !== chromeLastTime || at !== chromeLastScreen) {
       try {
+        gl.activeTexture(gl.TEXTURE0);
         gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,v);
-        var error = gl.getError();
-        if (error !== gl.NO_ERROR) throw new Error('Video texture upload failed: WebGL error '+error);
       } catch (error) { console.error(error); chromeStop(true); return; }
-      chromeLastVideo = v; chromeLastTime = v.currentTime;
+      chromeLastVideo = v; chromeLastTime = v.currentTime; chromeLastScreen = at; chromeDirty = true;
     }
     try {
-      gl.uniform2f(chromeUniforms.res,chromeCanvas.width,chromeCanvas.height);
-      gl.uniform2f(chromeUniforms.stage,chromeW,chromeH);
-      gl.uniform2f(chromeUniforms.video,v.videoWidth,v.videoHeight);
-      gl.uniform1f(chromeUniforms.time,now*0.0006);
-      gl.uniform1f(chromeUniforms.macroTime,chromeMacroTime);
-      gl.uniform1f(chromeUniforms.calm,chromeCalm);
-      gl.uniform1f(chromeUniforms.screen,at);
-      gl.drawArrays(gl.TRIANGLES,0,6);
+      var t = now*0.0006;
+      function draw(u, rt, w, h){
+        gl.useProgram(u.program);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, rt ? rt.fb : null); gl.viewport(0,0,w,h);
+        gl.uniform2f(u.uRes,w,h); gl.uniform2f(u.uStageSize,chromeW,chromeH);
+        gl.uniform2f(u.uVideoSize,v.videoWidth,v.videoHeight);
+        gl.uniform1f(u.uTime,t); gl.uniform1f(u.uMacroTime,chromeMacroTime);
+        gl.uniform1f(u.uCalm,chromeCalm); gl.uniform1f(u.uScreen,at);
+        gl.drawArrays(gl.TRIANGLES,0,6);
+      }
+      if (chromeDirty) { draw(chromePasses.mask, chromeMaskRT, chromeMaskRT.w, chromeMaskRT.h); chromeDirty = false; }
+      draw(chromePasses.height, chromeHeightRT, chromeHeightRT.w, chromeHeightRT.h);
+      draw(chromePasses.final, null, chromeCanvas.width, chromeCanvas.height);
     } catch (error) { console.error(error); chromeStop(true); return; }
     document.body.classList.add('chrome-live');
     chromeRAF = requestAnimationFrame(chromeFrame);
