@@ -1,0 +1,659 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Dominik Machowiak — strony internetowe</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#ecebe6; --ink:#17191c; --gunmetal:#2c3135; --mercury:#9aa3a8; --white:#ffffff; --soft:#5b6166;
+    --g:clamp(16px,6vw,96px);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;overflow:hidden;background:var(--paper);color:var(--ink);
+    font-family:"Familjen Grotesk",system-ui,sans-serif;-webkit-font-smoothing:antialiased;overscroll-behavior:none}
+  body{touch-action:none}
+  a{color:inherit}
+  [hidden]{display:none!important}
+  :focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+
+  /* video stage */
+  .stage{position:fixed;inset:0;background:#fff;overflow:hidden}
+  .film{position:absolute;inset:0;--lift:-21%;transition:transform var(--lt,2.7s) cubic-bezier(.65,0,.35,1)}
+  /* projects screen: pull the drip line up to the top edge so it just hangs into the page */
+  body.jumping .film{transition:none}
+  .stage.lift .film{transform:translateY(var(--lift))}
+  .stage video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:62% 50%;opacity:0;pointer-events:none}
+  .stage video.on{opacity:1}
+  .stage canvas{position:absolute;inset:0;width:100%;height:100%;display:none;opacity:0;transition:opacity .35s;pointer-events:none}
+  body.live .stage canvas{display:block}
+  body.live .stage video{display:none}
+  body.live .stage[data-at="0"]{background:var(--paper)}
+  body.live .stage[data-at="1"]{background:var(--gunmetal)}
+  body.live .stage[data-at="2"],body.live .stage[data-at="3"]{background:#fff}
+
+  /* screens: text layers above the film */
+  .screen{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:0;transition:opacity .25s}
+  .screen.on{opacity:1;pointer-events:auto}
+  .screen.leaving{opacity:1;animation:wipe var(--wipe,.9s) cubic-bezier(.55,0,.75,.4) forwards}
+  .screen.leaving.up{animation-name:wipeUp}
+  @keyframes wipe{from{clip-path:inset(0 0 0 0)}to{clip-path:inset(0 0 0 100%)}}
+  @keyframes wipeUp{from{clip-path:inset(0 0 0 0)}to{clip-path:inset(0 0 100% 0)}}
+
+  /* 1 landing */
+  .hero{position:absolute;left:var(--g);top:50%;transform:translateY(-50%);max-width:min(44vw,620px)}
+  .hero h1{margin:0;font-weight:700;font-size:clamp(44px,7.4vw,124px);line-height:.88;letter-spacing:-.045em}
+  .hero p{margin:clamp(16px,2.4vw,30px) 0 0;max-width:34ch;font-size:clamp(17px,1.5vw,22px);line-height:1.4;color:var(--soft)}
+  .cue{position:absolute;left:var(--g);bottom:max(24px,env(safe-area-inset-bottom));display:flex;align-items:center;gap:10px;
+    font:inherit;font-size:15px;color:var(--soft);background:none;border:0;padding:6px 0;cursor:pointer}
+  .cue::after{content:"";width:1px;height:28px;background:currentColor;animation:drip 2.2s ease-in-out infinite;transform-origin:top}
+  @keyframes drip{0%{transform:scaleY(.2)}60%{transform:scaleY(1)}100%{transform:scaleY(.2)}}
+
+  /* 2 what I do — opaque sheet on the chrome */
+  .sheet{position:absolute;left:var(--g);bottom:clamp(24px,8vh,96px);width:min(560px,calc(100% - 2*var(--g)));
+    background:var(--paper);padding:clamp(22px,3vw,40px);border-radius:3px}
+  .sheet h2{margin:0 0 14px;font-size:clamp(30px,3.6vw,52px);line-height:1;letter-spacing:-.035em}
+  .sheet ul{margin:0;padding:0;list-style:none}
+  .sheet li{padding:12px 0;border-top:1px solid #17191c22;font-size:clamp(16px,1.35vw,19px);line-height:1.4}
+
+  /* 3 projects — white, under the drip line */
+  .projects{position:absolute;left:var(--g);right:var(--g);top:12vh;bottom:max(24px,6vh);margin:0 auto;max-width:1320px;
+    display:grid;grid-template-columns:minmax(0,1.5fr) minmax(240px,1fr);gap:clamp(20px,3vw,56px);align-items:center;align-content:center}
+  .shot{position:relative;aspect-ratio:16/10;border-radius:4px;overflow:hidden;background:#f1f1ef;box-shadow:0 1px 0 #0000000f,0 18px 40px -24px #2c313580}
+  .shot img{width:100%;height:100%;object-fit:cover;object-position:top;display:block}
+  .shot .name{position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;
+    font-size:clamp(24px,2.6vw,40px);font-weight:700;letter-spacing:-.03em;background:var(--gunmetal);color:var(--paper)}
+  .info h2{margin:0;font-size:clamp(28px,3vw,46px);line-height:1;letter-spacing:-.035em}
+  .info .status{margin:12px 0 0;color:var(--soft);font-size:15px}
+  .info .desc{margin:14px 0 0;font-size:clamp(17px,1.4vw,20px);line-height:1.45;max-width:36ch}
+  .info .visit{display:inline-block;margin-top:18px;font-weight:600;text-underline-offset:4px}
+  .ctrl{display:flex;align-items:center;gap:14px;margin-top:clamp(20px,4vh,40px)}
+  .ctrl button{width:48px;height:48px;border-radius:50%;border:0;cursor:pointer;color:var(--paper);font:600 20px/1 inherit;
+    background:radial-gradient(circle at 34% 28%,#a9b0b5 0,#4a5156 34%,#1c1f22 72%);box-shadow:inset 0 -2px 4px #0006,0 6px 14px -6px #000a}
+  .ctrl span{font-variant-numeric:tabular-nums;color:var(--soft);font-size:15px;min-width:4ch}
+
+  /* 4 end */
+  .end{position:absolute;left:48%;right:var(--g);top:9vh;bottom:auto;max-width:700px;text-align:left}
+  .end h2{margin:0;font-size:clamp(40px,5.6vw,92px);line-height:.9;letter-spacing:-.045em}
+  .end p{margin:16px 0 22px;font-size:clamp(17px,1.4vw,20px);line-height:1.45;color:var(--soft)}
+  .end a{display:inline-block;padding:15px 22px;border-radius:3px;background:var(--ink);color:var(--paper);text-decoration:none;font-weight:600}
+
+  .jump-cover{position:fixed;inset:0;z-index:5;background:var(--paper);opacity:0;pointer-events:none;transition:opacity 120ms ease}
+  body.jumping .screen{transition:none;animation:none!important}
+  /* where-am-I rail */
+  .rail{position:fixed;z-index:3;right:clamp(10px,2vw,28px);top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:6px}
+  .rail button{display:flex;justify-content:flex-end;align-items:center;gap:8px;padding:6px 0;border:0;background:none;cursor:pointer;font:inherit;font-size:13px;color:var(--soft)}
+  .rail button::after{content:"";width:18px;height:2px;background:currentColor;opacity:.45;transition:width .25s,opacity .25s}
+  .rail button[aria-current="true"]{color:var(--ink)}
+  .rail button[aria-current="true"]::after{width:34px;opacity:1}
+  .rail span{opacity:0;transition:opacity .2s}
+  .rail:hover span,.rail button:focus-visible span{opacity:1}
+  body.dark .rail button{color:#d9dcde}
+
+  /* Film / 3D switch */
+  .mode{position:fixed;z-index:4;top:max(12px,env(safe-area-inset-top));right:clamp(10px,2vw,28px);display:flex;gap:2px;padding:3px;border-radius:4px;background:var(--paper);font-size:14px;box-shadow:0 2px 10px -4px #0005}
+  .mode a{flex:none;white-space:nowrap;padding:6px 11px;border-radius:2px;text-decoration:none;color:var(--soft)}
+  .mode a[aria-current]{background:var(--ink);color:var(--paper)}
+
+  @media (max-width:760px){
+    .mode{left:var(--g);right:var(--g);max-width:calc(100vw - 2*var(--g));overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}
+    .mode::-webkit-scrollbar{display:none}
+    .stage video{object-position:68% 50%}
+    .hero{top:max(40px,env(safe-area-inset-top));transform:none;max-width:none;right:var(--g)}
+    .projects{top:14vh;align-content:center;grid-template-columns:1fr;gap:16px;overflow:auto}
+    .info .desc{font-size:16px}
+    .end{left:var(--g);right:auto;text-align:left;top:auto;bottom:calc(32px + env(safe-area-inset-bottom))}
+    .end a{background:var(--ink)}
+    .rail{display:none}
+  }
+  @media (prefers-reduced-motion:reduce){.cue::after{animation:none}.screen.leaving{animation-duration:.01s}}
+</style>
+</head>
+<body>
+<div class="stage" id="stage" aria-hidden="true"><div class="film">
+  <video id="f0" data-src="../video/clips/v1-sweep.mp4" muted playsinline preload="metadata" data-poster="../video/clips/poster.jpg" class="on"></video>
+  <video id="f1" data-src="../video/clips/v2-drain.mp4" muted playsinline preload="metadata"></video>
+  <video id="f2" data-src="../video/clips/v3-tide.mp4" muted playsinline preload="metadata"></video>
+  <video id="r0" data-src="../video/clips/v1-sweep-rev.mp4" muted playsinline preload="metadata"></video>
+  <video id="r1" data-src="../video/clips/v2-drain-rev.mp4" muted playsinline preload="metadata"></video>
+  <video id="r2" data-src="../video/clips/v3-tide-rev.mp4" muted playsinline preload="metadata"></video>
+</div><canvas id="gl" aria-hidden="true"></canvas></div>
+
+<main>
+  <section class="screen on" data-i="0" aria-label="Start">
+    <div class="hero">
+      <h1>Dominik Machowiak</h1>
+      <p>Robię strony internetowe dla małych firm z Kalisza i okolic. Proste, szybkie, zrozumiałe dla Twoich klientów.</p>
+    </div>
+    <button class="cue" data-go="1">Przewiń w dół</button>
+  </section>
+
+  <section class="screen" data-i="1" aria-label="Co robię">
+    <div class="sheet">
+      <h2>Co robię</h2>
+      <ul>
+        <li>Projektuję stronę pod Twoich klientów: co chcą sprawdzić i jak mają się z Tobą skontaktować.</li>
+        <li>Piszę teksty prostym językiem, bez branżowego żargonu.</li>
+        <li>Wdrażam stronę i sprawdzam, czy działa na telefonie.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="screen" data-i="2" aria-label="Projekty">
+    <div class="projects">
+      <div class="shot" id="shot"></div>
+      <div class="info">
+        <h2 id="pLabel"></h2>
+        <p class="status" id="pStatus"></p>
+        <p class="desc" id="pDesc"></p>
+        <a class="visit" id="pLink" target="_blank" rel="noopener" hidden>Zobacz stronę</a>
+        <div class="ctrl">
+          <button id="prev" aria-label="Poprzedni projekt">‹</button>
+          <button id="next" aria-label="Następny projekt">›</button>
+          <span id="pCount" aria-live="polite"></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="screen" data-i="3" aria-label="Kontakt">
+    <div class="end">
+      <h2>Porozmawiajmy</h2>
+      <p>Napisz, czego potrzebuje Twoja firma.</p>
+      <a href="../#kontakt">Napisz do mnie</a>
+    </div>
+  </section>
+</main>
+<div class="jump-cover" id="jumpCover" aria-hidden="true"></div>
+
+<nav class="mode" aria-label="Wersja"></nav>
+<script src="../versions.js"></script>
+
+<nav class="rail" aria-label="Sekcje">
+  <button data-go="0" aria-current="true"><span>Start</span></button>
+  <button data-go="1"><span>Co robię</span></button>
+  <button data-go="2"><span>Projekty</span></button>
+  <button data-go="3"><span>Kontakt</span></button>
+</nav>
+
+<script id="fs" type="x-shader/x-fragment">
+precision highp float;
+uniform vec2 uRes; uniform float uTime; uniform float uS;
+/* Command Centre height field from 3D 1. */
+vec2 hash(vec2 p){ p=vec2(dot(p,vec2(127.1,311.7)),dot(p,vec2(269.5,183.3))); return -1.0+2.0*fract(sin(p)*43758.5453123); }
+float noise(vec2 p){ vec2 i=floor(p); vec2 f=fract(p); vec2 u=f*f*(3.0-2.0*f);
+  return mix(mix(dot(hash(i),f),dot(hash(i+vec2(1.0,0.0)),f-vec2(1.0,0.0)),u.x),
+             mix(dot(hash(i+vec2(0.0,1.0)),f-vec2(0.0,1.0)),dot(hash(i+vec2(1.0,1.0)),f-vec2(1.0,1.0)),u.x),u.y); }
+float fbmMacro(vec2 p){ float v=0.0,a=0.5; mat2 r=mat2(0.8,0.6,-0.6,0.8);
+  for(int i=0;i<4;i++){ v+=a*noise(p); p=r*p*1.9; a*=0.52; } return v; }
+float heightMacro(vec2 p,float t){ vec2 q=vec2(fbmMacro(p+t*0.035),fbmMacro(p+vec2(5.2,1.3)+t*0.028));
+  vec2 r=vec2(fbmMacro(p+2.6*q+vec2(1.7,9.2)-t*0.02),fbmMacro(p+2.6*q+vec2(8.3,2.8)+t*0.016));
+  return fbmMacro(p+2.6*r+t*0.009); }
+
+/* Negative distance is liquid. Coordinates use viewport height, origin at bottom left. */
+float smin(float a,float b,float k){ float h=clamp(0.5+0.5*(b-a)/k,0.0,1.0); return mix(b,a,h)-k*h*(1.0-h); }
+float ease(float x){ x=clamp(x,0.0,1.0); return x*x*(3.0-2.0*x); }
+float capsule(vec2 p,vec2 a,vec2 b,float r){ vec2 pa=p-a,ba=b-a; float h=clamp(dot(pa,ba)/max(dot(ba,ba),0.00001),0.0,1.0); return length(pa-ba*h)-r; }
+float taperedCapsule(vec2 p,vec2 a,vec2 b,float ra,float rb){
+  vec2 ba=b-a; float h=clamp(dot(p-a,ba)/max(dot(ba,ba),0.00001),0.0,1.0);
+  return length(p-mix(a,b,h))-mix(ra,rb,h);
+}
+float ell(vec2 p,vec2 c,vec2 r){ vec2 q=(p-c)/r; return (length(q)-1.0)*min(r.x,r.y); }
+float blob(vec2 p,float asp,float t){
+  float bob=0.015*sin(t*0.7);
+  vec2 q=p-vec2(asp*0.70+0.009*sin(t*0.45),0.53+bob);
+  q.y-=0.012*sin(q.x*7.0+t*0.32);
+  float left=ell(q,vec2(-0.120,0.023),vec2(0.140,0.110));
+  float right=ell(q,vec2(0.120,-0.015),vec2(0.160,0.125));
+  return smin(left,right,0.14);
+}
+float sweep(vec2 p,float asp,float k,float t){
+  float e=ease(k);
+  float front=mix(-0.45,asp+0.55,e)+0.16*sin(p.y*4.8-t*1.0)+0.26*(p.y-0.47)+0.055*sin(p.y*13.0+t*1.4);
+  float d=p.x-front;
+  /* The front rolls forward into a curling crest. */
+  d-=0.12*exp(-pow((p.y-0.67)*4.5,2.0))*sin(e*3.14159);
+  if(k<0.001) return blob(p,asp,t);
+  d=smin(d,blob(p,asp,t),0.035+0.07*e);
+  if(k>0.12 && k<0.93){
+    for(int i=0;i<3;i++){
+      float fi=float(i);
+      vec2 bead=vec2(front+0.045+0.038*fi,0.67+0.11*fi+0.035*sin(t+fi*2.0));
+      d=min(d,length(p-bead)-(0.012-0.002*fi)*sin(3.14159*e));
+    }
+  }
+  return d;
+}
+float lineShape(vec2 p,float asp,float t){
+  float edge=min(0.93+0.0025*sin(p.x*5.0+t*0.38)+0.0015*sin(p.x*13.0-t*0.53),
+                 1.0-80.0/uRes.y-0.0045);
+  float d=abs(p.y-edge)-0.0045;
+  for(int i=0;i<4;i++){
+    float fi=float(i);
+    float j=fract(sin(fi*17.17+3.8)*43758.5);
+    float x=asp*(0.035+0.28*(fi+0.3*j)/4.0);
+    float age=fract((t+fi*1.37)/5.3);
+    float len=(0.025+0.09*fract(sin(fi*31.31+1.9)*17319.1))*(0.82+0.18*ease(age*3.0));
+    float bend=0.003*sin(t*0.65+fi*2.0);
+    vec2 tip=vec2(x+bend,edge-len);
+    float neck=0.0022+0.0016*fract(sin(fi*9.31+4.1)*13211.7);
+    d=smin(d,capsule(p,vec2(x,edge),tip,neck),0.005);
+    d=smin(d,ell(p,tip,vec2(neck*2.1,neck*2.7)),0.004);
+    if(i==1){
+      vec2 drop=tip+vec2(0.003*sin(t*0.8),-0.75*age*age);
+      d=min(d,ell(p,drop,vec2(0.005,0.008)*(1.0-0.45*age)));
+    }
+  }
+  return d;
+}
+float drainEdge(float x,float e,float t){
+  float wave=0.020*sin(x*5.0+t*0.65)+0.009*sin(x*9.0-t*0.31)
+            +0.007*noise(vec2(x*3.2,t*0.18));
+  return mix(-0.22,0.93,e)+sin(3.14159*e)*wave;
+}
+float drain(vec2 p,float asp,float k,float t){
+  if(k<0.001) return -0.22-p.y;
+  if(k>=0.999) return lineShape(p,asp,t);
+  float e=ease(k);
+  float edge=drainEdge(p.x,e,t);
+  float d=edge-p.y;
+  for(int i=0;i<12;i++){
+    float fi=float(i);
+    float j=fract(sin(fi*12.9898+2.4)*43758.5);
+    float x=asp*(0.025+0.95*(fi+0.14+0.58*j)/12.0);
+    float phase=fract(sin(fi*7.41+3.1)*21213.7);
+    float len=(0.045+0.16*fract(sin(fi*23.19+1.7)*17441.3))*sin(3.14159*e)*(0.75+0.25*sin(t*0.47+phase*6.28));
+    float root=drainEdge(x,e,t);
+    vec2 tip=vec2(x+0.006*sin(t*0.7+phase*6.28),root-len);
+    float neck=0.003+0.004*fract(sin(fi*9.73+5.2)*32171.7);
+    d=smin(d,capsule(p,vec2(x,root),tip,neck),0.012);
+    d=smin(d,ell(p,tip,vec2(neck*1.5,neck*2.0)),0.008);
+  }
+  if(k>0.78) d=mix(d,lineShape(p,asp,t),ease((k-0.78)/0.22));
+  return d;
+}
+float tideBody(vec2 p,float asp,float e,float t){
+  vec2 seed=vec2(asp*0.075,0.19);
+  if(e<0.001) return length(p-seed)-0.012;
+  float breathe=0.007*sin(t*0.38);
+  float flow=0.014*sin(t*0.32);
+  vec2 q=seed+(p-seed)/e;
+  float d=ell(q,vec2(asp*0.19,0.235+0.5*breathe),vec2(asp*0.195,0.15));
+  d=smin(d,capsule(q,vec2(-asp*0.12,0.52+breathe),vec2(asp*0.17,0.28+breathe),0.105),0.14);
+  d=smin(d,capsule(q,vec2(asp*0.22,0.265+breathe),vec2(asp*0.68+flow,0.355),0.085),0.14);
+  d=smin(d,ell(q,vec2(asp*0.80+flow,0.395+0.008*sin(t*0.42)),vec2(asp*0.12,0.11)),0.14);
+  return e*d;
+}
+float tide(vec2 p,float asp,float k,float t){
+  float e=ease(k);
+  float sx=asp*0.075;
+  float tipY=0.93-0.74*e;
+  float wobble=0.004*sin(p.y*16.0-t*0.7);
+  float stream=max(abs(p.x-sx-wobble)-(0.0025+0.004*e),max(p.y-0.93,tipY-p.y));
+  float d=smin(lineShape(p,asp,t),stream,0.005);
+  d=smin(d,ell(p,vec2(sx,tipY),vec2(0.01+0.015*e,0.012+0.018*e)),0.01);
+  float body=tideBody(p,asp,e,t);
+  d=smin(d,body,0.012+0.028*e);
+  return mix(d,body,ease((e-0.42)/0.58));
+}
+float liquid(vec2 p,float asp,float s,float t){
+  if(s<0.001) return blob(p,asp,t);
+  if(s<1.0) return sweep(p,asp,s,t);
+  if(s<2.0) return drain(p,asp,s-1.0,t);
+  if(s<2.001) return lineShape(p,asp,t);
+  return tide(p,asp,s-2.0,t);
+}
+void main(){
+  vec2 res=uRes; float asp=res.x/res.y; float t=uTime; float s=uS;
+  vec2 p=gl_FragCoord.xy/res.y;
+  float d=liquid(p,asp,s,t);
+  float px=1.6/res.y;
+  float a=1.0-smoothstep(-px,px,d);
+  vec3 paper=vec3(0.925,0.922,0.902), white=vec3(1.0);
+  vec3 bg=s<1.0?paper:white;
+  if(s<0.5){
+    float bob=0.015*sin(t*0.7);
+    float shadowScale=1.0-0.12*bob/0.015;
+    float shadow=exp(-pow((p.x-asp*0.70)/(0.30*shadowScale),2.0)-pow((p.y-0.275)/0.035,2.0));
+    bg*=1.0-0.17*shadow*(1.0-0.15*bob/0.015)*(1.0-ease(s*2.0));
+  }
+  /* Skip the contact sample away from the silhouette. */
+  if(s<1.85 && d<0.12 && a<1.0){
+    float ds=liquid(p+vec2(0.012,0.03),asp,s,t);
+    bg*=1.0-0.16*(1.0-smoothstep(0.0,0.08,ds))*(1.0-a);
+  }
+  if(s>2.85 && d<0.11 && a<1.0){
+    float ds=liquid(p+vec2(-0.008,0.022),asp,s,t);
+    bg*=1.0-0.14*ease((s-2.85)/0.15)*(1.0-smoothstep(0.0,0.07,ds))*(1.0-a);
+  }
+  if(a<=0.0){ gl_FragColor=vec4(bg,1.0); return; }
+  vec2 flow=s<1.0?vec2(-ease(s)*0.9,0.0):vec2(0.0,(s<2.0?s-1.0:1.0)*0.6);
+  vec2 uv=(p-vec2(asp*0.5,0.5))*0.85+flow;
+  float grazing=(1.0-ease(abs(s-1.0)*3.0));
+  vec2 planeUV=vec2((p.x-asp*0.5)/(p.y+0.35)/3.0,1.0/(p.y+0.35));
+  uv=mix(uv,planeUV,grazing);
+  uv+=vec2(t*0.10,t*0.035);
+  vec2 eps=vec2(0.012,0.0);
+  float h=heightMacro(uv,t), hx=heightMacro(uv+eps.xy,t), hy=heightMacro(uv+eps.yx,t);
+  float wave=uv.y*9.0-t*0.7+0.36*sin(uv.x*2.4+t*0.12);
+  h+=grazing*0.25*sin(wave);
+  hx+=grazing*0.25*sin(wave+0.36*(sin((uv.x+eps.x)*2.4+t*0.12)-sin(uv.x*2.4+t*0.12)));
+  hy+=grazing*0.25*sin(wave+eps.x*9.0);
+  vec2 g=vec2(0.0);
+  float rim=1.0-clamp(-d/0.07,0.0,1.0);
+  if(rim>0.001){
+    g=vec2(liquid(p+vec2(0.006,0.0),asp,s,t)-liquid(p-vec2(0.006,0.0),asp,s,t),
+           liquid(p+vec2(0.0,0.006),asp,s,t)-liquid(p-vec2(0.0,0.006),asp,s,t));
+  }
+  vec2 edgeN=(g/(2.0*0.006))*(pow(rim,2.2)*3.2+rim*0.35);
+  float normalGain=mix(0.32,0.7,ease(s*3.0));
+  normalGain=mix(normalGain,0.32,ease((s-2.5)/0.5));
+  vec3 N=normalize(vec3(((h-hx)/eps.x)*normalGain+edgeN.x,((h-hy)/eps.x)*normalGain+edgeN.y,0.55));
+  vec3 V=normalize(vec3(uv*0.15,1.0)); vec3 R=reflect(-V,N);
+  float envGrad=smoothstep(-0.9,0.9,R.y);
+  float beanFreq=mix(0.68,1.0,ease(s*4.0));
+  float band1=pow(clamp(0.5+0.5*sin((R.x*3.2+R.y*2.1)*beanFreq+t*0.05),0.0,1.0),3.0);
+  float band2=pow(clamp(0.5+0.5*cos((R.z*4.5-R.y*2.6)*beanFreq),0.0,1.0),4.5);
+  float band3=smoothstep(0.55,0.95,sin((R.y*5.0+R.x*2.2)*beanFreq-t*0.04));
+  float env=envGrad*0.20+band1*0.30+band2*0.28+band3*0.60;
+  vec3 L=normalize(vec3(0.45,0.82,0.62)); vec3 Hv=normalize(L+V); float NdotH=max(dot(N,Hv),0.0);
+  float spec=pow(NdotH,60.0)*2.0+pow(NdotH,9.0)*0.45;
+  float fres=pow(1.0-max(dot(N,V),0.0),3.5);
+  float base=0.045+pow(clamp(h*0.5+0.5,0.0,1.0),2.0)*0.10;
+  float b=base+env*(0.30+0.70*fres)+spec;
+  b=pow(clamp(b,0.0,1.0),1.05);
+  b+=(fract(sin(dot(gl_FragCoord.xy,vec2(12.9898,78.233)))*43758.5453)-0.5)*0.018;
+  b=clamp(b,0.0,0.96);
+  float poolGlow=pow(smoothstep(0.24,0.70,b+0.10*smoothstep(0.1,0.45,h)),1.7);
+  vec3 planeMetal=vec3(0.02,0.03,0.045)+vec3(0.95,0.96,0.97)*poolGlow;
+  vec3 metal=mix(vec3(clamp(b,0.0,1.0)),clamp(planeMetal,0.0,1.0),grazing);
+  gl_FragColor=vec4(mix(bg,metal,a),1.0);
+}
+</script>
+<script src="../projects-data.js?v=4.1" charset="utf-8"></script>
+<script>
+(function(){
+  var RATE = 1.8;                 /* clips are ~4.8s; play them as a fast sweep */
+  var LAST = 3;
+  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var fwd = [0,1,2].map(function(i){return document.getElementById('f'+i)});
+  var rev = [0,1,2].map(function(i){return document.getElementById('r'+i)});
+  var screens = [].slice.call(document.querySelectorAll('.screen'));
+  var rail = [].slice.call(document.querySelectorAll('.rail button'));
+  var at = 0, busy = false, queue = null, shown = fwd[0];
+  var stage = document.getElementById('stage');
+  var canvas = document.getElementById('gl'), gl = null, live = false, initialized = false;
+  var uRes, uTime, uS, S = 0, motion = null, debugFrozen = false;
+  var DUR = [1.15, 1.5, 1.7];
+  var desktopAtLoad = innerWidth >= 761;
+  if (desktopAtLoad && !reduce) {
+    try { gl = canvas.getContext('webgl', {antialias:false, alpha:false, powerPreference:'high-performance', desynchronized:true}); }
+    catch (err) { console.error(err); }
+    if (gl) {
+      function compile(type, source){
+        var shader = gl.createShader(type); gl.shaderSource(shader, source); gl.compileShader(shader);
+        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) { console.error(gl.getShaderInfoLog(shader)); return null; }
+        return shader;
+      }
+      var vs = compile(gl.VERTEX_SHADER, 'attribute vec2 p;void main(){gl_Position=vec4(p,0.0,1.0);}');
+      var fs = compile(gl.FRAGMENT_SHADER, document.getElementById('fs').textContent);
+      if (vs && fs) {
+        var program = gl.createProgram(); gl.attachShader(program, vs); gl.attachShader(program, fs); gl.linkProgram(program);
+        if (!gl.getProgramParameter(program, gl.LINK_STATUS)) console.error(gl.getProgramInfoLog(program));
+        else {
+          gl.useProgram(program);
+          gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+          gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]), gl.STATIC_DRAW);
+          var loc = gl.getAttribLocation(program, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+          uRes = gl.getUniformLocation(program, 'uRes'); uTime = gl.getUniformLocation(program, 'uTime'); uS = gl.getUniformLocation(program, 'uS');
+          live = true;
+        }
+      }
+    }
+  }
+  function activateVideo(){
+    if (live) { live = false; document.body.classList.remove('live'); canvas.style.opacity = '0'; }
+    fwd.concat(rev).forEach(function(v){ if (!v.getAttribute('src')) v.src = v.getAttribute('data-src'); });
+    if (!fwd[0].poster) fwd[0].poster = fwd[0].getAttribute('data-poster');
+    stage.classList.toggle('lift', at === 2); fitLift(); if (initialized) rest(at);
+  }
+  if (live) document.body.classList.add('live'); else activateVideo();
+  addEventListener('resize', function(){ if ((innerWidth >= 761) !== desktopAtLoad) location.reload(); });
+  if (live) {
+    var cssW = 0, cssH = 0, cap = 1, scale = .75, avg = 16.7, slow = 0, fast = 0, lastFrame = 0, raf = 0, revealed = false, hiddenAt = 0;
+    function resizeBuffer(){
+      var w = Math.max(1, Math.floor(cssW * cap * scale)), h = Math.max(1, Math.floor(cssH * cap * scale));
+      if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; gl.viewport(0, 0, w, h); }
+    }
+    function resizeCanvas(){
+      var box = canvas.getBoundingClientRect(); cssW = box.width; cssH = box.height;
+      cap = Math.min(devicePixelRatio || 1, 1.25); resizeBuffer();
+    }
+    if ('ResizeObserver' in window) new ResizeObserver(resizeCanvas).observe(canvas);
+    addEventListener('resize', resizeCanvas); resizeCanvas();
+    function frame(now){
+      if (!live || document.hidden) { raf = 0; return; }
+      var dt = lastFrame ? now - lastFrame : 16.7; lastFrame = now;
+      if (motion && !debugFrozen) {
+        var k = Math.min(1, (now - motion.start) / motion.ms);
+        var eased = k * k * (3 - 2 * k);
+        S = motion.from + (motion.to - motion.from) * eased;
+        if (k === 1) { var done = motion.resolve; motion = null; done(); }
+      }
+      if (dt < 100) {
+        avg += (dt - avg) * .06;
+        slow = avg > 20 ? slow + dt : 0; fast = avg < 14 ? fast + dt : 0;
+        if (slow >= 500 && scale > .55) { scale = Math.max(.55, +(scale - .1).toFixed(2)); slow = 0; fast = 0; resizeBuffer(); }
+        if (fast >= 2000 && scale < 1) { scale = Math.min(1, +(scale + .1).toFixed(2)); slow = 0; fast = 0; resizeBuffer(); }
+      }
+      gl.uniform2f(uRes, canvas.width, canvas.height); gl.uniform1f(uTime, now * .0018); gl.uniform1f(uS, S);
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+      if (!revealed) {
+        if (gl.getError() === gl.NO_ERROR) { revealed = true; canvas.style.opacity = '1'; }
+        else { console.error('WebGL draw failed; using Film 1 clips'); activateVideo(); raf = 0; return; }
+      }
+      raf = requestAnimationFrame(frame);
+    }
+    document.addEventListener('visibilitychange', function(){
+      if (document.hidden) { hiddenAt = performance.now(); if (raf) cancelAnimationFrame(raf); raf = 0; }
+      else if (live && !raf) { lastFrame = 0; if (motion) motion.start += performance.now() - hiddenAt; raf = requestAnimationFrame(frame); }
+    });
+    canvas.addEventListener('webglcontextlost', function(e){ e.preventDefault(); if (raf) cancelAnimationFrame(raf); activateVideo(); });
+    if (!document.hidden) raf = requestAnimationFrame(frame);
+  }
+  function tween(from, to, secs){
+    return new Promise(function(res){
+      if (debugFrozen) { res(); return; }
+      motion = {from:from, to:to, start:performance.now(), ms:secs * 1000, resolve:res};
+    });
+  }
+  /* The drip band's top edge sits at 25% of the clip frame. Lift the film so that edge
+     lands just above the screen top, leaving only the band's underside and drips visible. */
+  function fitLift(){
+    var vw = innerWidth, vh = innerHeight, h = Math.max(vh, vw * 9 / 16), off = (vh - h) / 2;
+    stage.querySelector('.film').style.setProperty('--lift', (-(off + 0.25 * h) - 0.014 * h).toFixed(1) + 'px');
+  }
+  fitLift(); addEventListener('resize', fitLift);
+
+  function preloadNear(i){
+    fwd.concat(rev).forEach(function(v, n){
+      var needed = n < 3 ? Math.abs(n - i) <= 1 : Math.abs(n - 2 - i) <= 1;
+      v.preload = needed ? 'auto' : 'metadata';
+    });
+  }
+  function railTo(i){ rail.forEach(function(b,k){ b.setAttribute('aria-current', k === i ? 'true' : 'false'); }); }
+  function pause(ms){ return new Promise(function(res){ setTimeout(res, ms); }); }
+  var cover = document.getElementById('jumpCover');
+  function seek(v, t){
+    return new Promise(function(res){
+      if (Math.abs(v.currentTime - t) < 0.01 && v.readyState >= 2) return res();
+      v.addEventListener('seeked', function(){ res(); }, {once:true});
+      v.currentTime = t;
+    });
+  }
+  function ready(v){
+    if (v.readyState >= 2) return Promise.resolve();
+    /* iOS often ignores preload; ask for the clip explicitly */
+    return new Promise(function(res){ v.addEventListener('loadeddata', res, {once:true}); if (v.networkState !== 2) v.load(); });
+  }
+  function show(v){ v.classList.add('on'); if (shown && shown !== v) shown.classList.remove('on'); shown = v; }
+  function play(v){
+    return new Promise(function(res){
+      if (reduce) { seek(v, v.duration - 0.05).then(res); return; }
+      v.playbackRate = RATE;
+      v.addEventListener('ended', function(){ res(); }, {once:true});
+      var p = v.play(); if (p && p.catch) p.catch(function(){ seek(v, v.duration - 0.05).then(res); });
+    });
+  }
+  /* The resting frame for each screen: start of its outgoing clip, or the end of the last clip. */
+  function rest(i){
+    if (live) return Promise.resolve();
+    if (i < LAST) return ready(fwd[i]).then(function(){ return seek(fwd[i], 0); }).then(function(){ show(fwd[i]); });
+    var v = fwd[LAST-1];
+    return ready(v).then(function(){ return seek(v, v.duration - 0.05); }).then(function(){ show(v); });
+  }
+  function setScreen(i, dir){
+    screens.forEach(function(s, k){
+      s.classList.remove('leaving','up');
+      if (k === at && k !== i && dir) {
+        s.style.setProperty('--wipe', (reduce ? .01 : 4.8 / RATE * .55) + 's');
+        s.classList.add('leaving'); if (dir < 0) s.classList.add('up');
+      }
+      if (k === i) s.classList.add('on'); else s.classList.remove('on');
+    });
+    if (i >= 0) railTo(queue !== null ? queue : i);
+    document.body.classList.toggle('dark', i === 1);
+    if (i >= 0) { window.__screen = i; stage.setAttribute('data-at', i); if (!live) preloadNear(i); [].forEach.call(document.querySelectorAll('.mode a'), function(a){ a.href = '../' + a.getAttribute('data-v') + '/?s=' + i; }); }
+  }
+
+  function step(dir){
+    var from = at, to = at + dir;
+    if (to < 0 || to > LAST) return Promise.resolve();
+    if (live) {
+      setScreen(-1, dir);
+      return tween(from, to, DUR[Math.min(from, to)]).then(function(){
+        at = to; setScreen(at, 0); screens[at].classList.remove('leaving');
+      });
+    }
+    var clip = dir > 0 ? fwd[from] : rev[to];
+    setScreen(-1, dir);           /* wipe the current text away with the wave */
+    stage.style.setProperty('--lt', (reduce ? 0 : 4.84 / RATE) + 's');
+    stage.classList.toggle('lift', to === 2);   /* glide in step with the clip */
+    return ready(clip).then(function(){ return seek(clip, 0); })
+      .then(function(){ show(clip); return play(clip); })
+      .then(function(){
+        at = to;
+        /* after the last forward clip, its final frame is the resting frame */
+        if (!(dir > 0 && to === LAST)) return rest(to);
+      })
+      .then(function(){ setScreen(at, 0); screens[at].classList.remove('leaving'); });
+  }
+  function jump(to){
+    if (live) {
+      document.body.classList.add('jumping'); cover.style.opacity = '1';
+      return pause(120).then(function(){
+        if (!debugFrozen) S = to;
+        at = to; setScreen(to, 0);
+        cover.style.transitionDuration = '180ms'; cover.style.opacity = '0';
+        return pause(180);
+      }).then(function(){ document.body.classList.remove('jumping'); cover.style.transitionDuration = '120ms'; });
+    }
+    var v = fwd[Math.min(to, LAST - 1)];
+    var frame = ready(v).then(function(){ return seek(v, to === LAST ? v.duration - 0.05 : 0); });
+    if (reduce) {
+      return frame.then(function(){
+        document.body.classList.add('jumping'); show(v); stage.classList.toggle('lift', to === 2);
+        at = to; setScreen(to, 0); document.body.classList.remove('jumping');
+      });
+    }
+    document.body.classList.add('jumping'); cover.style.opacity = '1';
+    return Promise.all([pause(120), frame]).then(function(){
+      show(v); stage.classList.toggle('lift', to === 2);
+      at = to; setScreen(to, 0);
+      cover.style.transitionDuration = '180ms'; cover.style.opacity = '0';
+      return pause(180);
+    }).then(function(){ document.body.classList.remove('jumping'); cover.style.transitionDuration = '120ms'; });
+  }
+  function go(target){
+    target = Math.max(0, Math.min(LAST, target));
+    railTo(target);
+    if (busy) { queue = target; return; }
+    if (target === at) return;
+    busy = true;
+    (Math.abs(target - at) > 1 ? jump(target) : step(target > at ? 1 : -1)).then(function(){
+      busy = false;
+      var next = queue; queue = null;
+      if (next !== null && next !== at) go(next); else railTo(at);
+    });
+  }
+
+  /* input: wheel, touch, keys, buttons */
+  var lastWheel = 0;
+  addEventListener('wheel', function(e){
+    e.preventDefault();
+    var now = performance.now();
+    if (now - lastWheel < 450 || Math.abs(e.deltaY) < 12) return;
+    lastWheel = now; go((queue !== null ? queue : at) + (e.deltaY > 0 ? 1 : -1));
+  }, {passive:false});
+  /* touch: own the whole gesture, or iOS turns it into a page pan and cancels touchend */
+  var tx = 0, ty = 0, lx = 0, ly = 0, touching = false;
+  addEventListener('touchstart', function(e){ touching = true; tx = lx = e.touches[0].clientX; ty = ly = e.touches[0].clientY; }, {passive:true});
+  addEventListener('touchmove', function(e){
+    lx = e.touches[0].clientX; ly = e.touches[0].clientY;
+    if (e.cancelable) e.preventDefault();
+  }, {passive:false});
+  function swipe(){
+    if (!touching) return; touching = false;
+    var dx = lx - tx, dy = ly - ty;
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40 && at === 2) { slide(dx < 0 ? 1 : -1); return; }
+    if (Math.abs(dy) > 40) go(at + (dy < 0 ? 1 : -1));
+  }
+  addEventListener('touchend', function(e){ var c = e.changedTouches[0]; if (c) { lx = c.clientX; ly = c.clientY; } swipe(); }, {passive:true});
+  addEventListener('touchcancel', swipe, {passive:true});
+  addEventListener('keydown', function(e){
+    if (['ArrowDown','PageDown',' '].indexOf(e.key) > -1) { e.preventDefault(); go(at + 1); }
+    else if (['ArrowUp','PageUp'].indexOf(e.key) > -1) { e.preventDefault(); go(at - 1); }
+    else if (at === 2 && e.key === 'ArrowRight') slide(1);
+    else if (at === 2 && e.key === 'ArrowLeft') slide(-1);
+  });
+  document.addEventListener('click', function(e){
+    var b = e.target.closest('[data-go]'); if (b) go(+b.getAttribute('data-go'));
+  });
+
+  /* projects carousel */
+  var P = (window.PROTO_PROJECTS || []), pi = 0;
+  var shot = document.getElementById('shot');
+  function render(){
+    var p = P[pi]; if (!p) return;
+    shot.innerHTML = '';
+    if (p.image) { var img = new Image(); img.src = '../' + p.image; img.alt = p.label; shot.appendChild(img); }
+    else { var n = document.createElement('div'); n.className = 'name'; n.textContent = p.label; shot.appendChild(n); }
+    document.getElementById('pLabel').textContent = p.label;
+    document.getElementById('pStatus').textContent = p.status;
+    document.getElementById('pDesc').textContent = p.description;
+    var a = document.getElementById('pLink'); a.hidden = !p.url; if (p.url) a.href = p.url;
+    document.getElementById('pCount').textContent = (pi + 1) + ' / ' + P.length;
+  }
+  function slide(d){ if (!P.length) return; pi = (pi + d + P.length) % P.length; render(); }
+  document.getElementById('prev').onclick = function(){ slide(-1); };
+  document.getElementById('next').onclick = function(){ slide(1); };
+  render();
+
+  /* ?s=N opens on screen N (used by the Film / 3D switch) */
+  at = Math.max(0, Math.min(LAST, parseInt(new URLSearchParams(location.search).get('s'), 10) || 0));
+  S = at;
+  initialized = true;
+  stage.style.setProperty('--lt', '0s'); stage.classList.toggle('lift', at === 2);
+  setScreen(at, 0); rest(at);
+  if (location.hash === '#debug') window.__S = function(x){
+    debugFrozen = true; S = Math.max(0, Math.min(3, +x || 0));
+    if (motion) { var done = motion.resolve; motion = null; done(); }
+  };
+})();
+</script>
+</body>
+</html>

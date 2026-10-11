@@ -1,4 +1,4 @@
-window.BRAND_VERSIONS = [{v:'video',label:'Film 1'},{v:'3d',label:'3D 1'},{v:'3d-2',label:'3D 2'},{v:'video-2',label:'Film 2'},{v:'v6',label:'V6'}];
+window.BRAND_VERSIONS = [{v:'video',label:'Film 1'},{v:'3d',label:'3D 1'},{v:'3d-2',label:'3D 2'},{v:'video-2',label:'Film 2'},{v:'film-live',label:'Film 1 Live'},{v:'v6',label:'V6'}];
 window.BRAND_VERSIONS.push({v:'v7',label:'V7'});
 window.BRAND_VERSIONS.push({v:'v8',label:'V8'});
 window.BRAND_VERSIONS.push({v:'v5',label:'V5'});
