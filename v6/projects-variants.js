@@ -41,9 +41,18 @@
 
     if (project.image) {
       var img = element('img', 'pv-image');
+      if (project.width && project.height) {
+        img.width = project.width;
+        img.height = project.height;
+      }
+      if (project.srcset) {
+        img.srcset = project.srcset;
+        img.sizes = '(max-width: 760px) 92vw, (max-width: 1100px) 50vw, 740px';
+      }
       img.src = base + project.image;
-      img.alt = 'Podgląd projektu: ' + project.label;
+      img.alt = 'Zrzut ekranu strony: ' + project.label;
       img.loading = 'lazy';
+      img.decoding = 'async';
       media.appendChild(img);
     } else if (id === 'strip') {
       var label = element('span', 'pv-metal-title', project.label);

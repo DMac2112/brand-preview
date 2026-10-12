@@ -1,0 +1,133 @@
+/* V6 legal pages (polityka-prywatnosci.html, cookies.html).
+   The V6 hairline route becomes the document's spine: it arrives from the top bar in one curve,
+   then runs down the left edge; every section heading is a stop on it. Self-hosted font, no third parties. */
+@font-face{font-family:"Instrument Sans";font-style:normal;font-weight:400 600;font-stretch:85% 100%;font-display:swap;src:url("fonts/instrument-sans-latin-ext.woff2") format("woff2");unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C4,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:"Instrument Sans";font-style:normal;font-weight:400 600;font-stretch:85% 100%;font-display:swap;src:url("fonts/instrument-sans-latin.woff2") format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+
+:root{--bg:#F7F8F9;--ink:#17191C;--steel:#8E959C;--steel-text:#5F666D;--mist:#E4E7EA;--gap:64px;--edge:max(6vw,40px);color-scheme:light}
+:root[data-theme="dark"]{--bg:#111315;--ink:#ECEEF0;--steel:#7D848B;--steel-text:#8B9299;--mist:#1E2125;color-scheme:dark}
+
+*{box-sizing:border-box}
+html{background:var(--bg);-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 18px/1.6 "Instrument Sans",Arial,sans-serif;overflow-x:hidden}
+a{color:inherit;text-decoration:underline;text-decoration-color:var(--steel);text-decoration-thickness:1px;text-underline-offset:3px}
+a:hover{text-decoration-color:var(--ink)}
+a:focus-visible,button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--ink);outline-offset:4px}
+::selection{background:var(--ink);color:var(--bg)}
+h1,h2,h3,p,ul,ol,dl,dd{margin:0}
+h1,h2{font-weight:600;font-stretch:85%;font-variation-settings:"wdth" 85;letter-spacing:-.015em}
+
+.skip{position:absolute;z-index:10;left:16px;top:10px;padding:10px 16px;background:var(--ink);color:var(--bg);font-size:15px;font-weight:600;text-decoration:none;transform:translateY(-160%)}
+.skip:focus{transform:none}
+
+/* top bar: same parts as V6 (name, theme switch) */
+.top{display:flex;align-items:center;gap:22px;padding:15px var(--edge) 0;min-height:58px}
+.top-name{font-size:14px;font-weight:600;text-decoration:none}
+.top-back{font-size:14px;color:var(--steel-text)}
+.theme{margin-left:auto;width:31px;height:31px;padding:0;border:1px solid var(--steel);border-radius:50%;background:var(--bg);color:var(--ink);display:grid;place-items:center;cursor:pointer}
+.theme svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.6}
+.theme .sun{display:none}
+:root[data-theme="dark"] .theme .sun{display:block}
+:root[data-theme="dark"] .theme .moon{display:none}
+
+/* the document and its route */
+.doc{position:relative;display:grid;grid-template-columns:minmax(0,68ch) minmax(0,1fr);grid-template-areas:"head index" "body index";column-gap:72px;max-width:1240px;margin:0 0 0 var(--edge);padding:150px var(--edge) 120px var(--gap)}
+.doc:focus{outline:none}
+.route-in{position:absolute;left:0;top:-58px;width:min(72%,700px);height:208px;overflow:visible;pointer-events:none}
+.route-in path{fill:none;stroke:var(--steel);stroke-width:1.5;vector-effect:non-scaling-stroke}
+.doc::before{content:"";position:absolute;left:0;top:149px;bottom:40px;width:1.5px;background:var(--steel)}
+.doc::after{content:"";position:absolute;left:-8px;bottom:39px;width:17.5px;height:3px;background:var(--ink)}
+
+.doc-head{grid-area:head}
+.doc h1{font-size:clamp(44px,6.4vw,92px);line-height:.96;max-width:12ch}
+.updated{margin-top:22px;font-size:15px;color:var(--steel-text)}
+.gist{margin-top:56px}
+.doc-body{grid-area:body}
+
+/* every section heading is a stop on the route */
+.doc h2{position:relative;font-size:clamp(28px,2.8vw,38px);line-height:1.08;margin:0 0 20px;scroll-margin-top:28px}
+.doc h2::before{content:"";position:absolute;left:calc(-1 * var(--gap) - 8px);top:.5em;width:17.5px;height:3px;background:var(--ink)}
+.doc section{margin-top:76px}
+.doc .gist h2{margin-bottom:22px}
+.doc h3{font-size:20px;line-height:1.3;font-weight:600;margin:30px 0 8px}
+.doc p+p,.doc p+ul,.doc ul+p,.doc dl+p,.doc p+dl,.doc p+.table-wrap,.doc .table-wrap+p{margin-top:14px}
+.doc ul{padding:0;list-style:none}
+.doc li{position:relative;padding-left:26px}
+.doc li+li{margin-top:8px}
+.doc li::before{content:"";position:absolute;left:0;top:.8em;width:12px;height:1.5px;background:var(--steel)}
+.lead{font-size:clamp(20px,1.7vw,23px);line-height:1.4;font-weight:500}
+.gist ul{font-size:clamp(19px,1.5vw,21px);line-height:1.45}
+.gist li+li{margin-top:12px}
+.fine{font-size:16px;color:var(--steel-text)}
+
+/* purpose blocks: legal basis and retention */
+.basis{display:grid;grid-template-columns:150px minmax(0,1fr);gap:6px 20px;margin-top:10px;font-size:17px}
+.basis dt{color:var(--steel-text)}
+.basis dd{margin:0}
+
+/* placeholders Dominik still has to fill in */
+.todo{background:var(--mist);color:var(--ink);border:1px dashed var(--ink);padding:0 .3em;font-weight:600;font-size:.95em;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+
+/* tables (storage list) */
+.table-wrap{margin-top:18px}
+table{width:100%;border-collapse:collapse;font-size:16px;line-height:1.45}
+caption{text-align:left;font-size:15px;color:var(--steel-text);padding-bottom:10px}
+th,td{text-align:left;vertical-align:top;padding:12px 16px 12px 0;border-bottom:1px solid var(--mist)}
+thead th{font-weight:600;border-bottom-color:var(--steel)}
+td code,p code{font-family:inherit;font-weight:600;background:var(--mist);padding:0 .3em}
+
+/* clear-storage control */
+.action{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;margin-top:22px}
+.button{display:inline-flex;align-items:center;min-height:52px;padding:12px 22px;border:0;background:var(--ink);color:var(--bg);font:inherit;font-size:16px;font-weight:600;cursor:pointer}
+.button:hover{background:var(--steel-text)}
+.status{font-size:16px;color:var(--steel-text)}
+.status.done{color:var(--ink)}
+
+/* section index */
+.index{grid-area:index;align-self:start;position:sticky;top:32px;margin-top:6px;font-size:15px;line-height:1.35}
+.index p{font-weight:600;margin-bottom:12px}
+.index ol{list-style:none;padding:0;margin:0;border-left:1px solid var(--mist)}
+.index li{padding:0}
+.index li::before{display:none}
+.index li+li{margin-top:0}
+.index a{display:block;padding:6px 0 6px 14px;margin-left:-1px;border-left:1px solid transparent;color:var(--steel-text);text-decoration:none}
+.index a:hover,.index a[aria-current="true"]{color:var(--ink);border-left-color:var(--ink)}
+
+/* footer, shared with V6 */
+.site-foot{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 32px;padding:26px var(--edge) 34px;border-top:1px solid var(--mist);font-size:14px;line-height:1.4;color:var(--steel-text)}
+.site-foot p{margin:0}
+.site-foot nav{display:flex;flex-wrap:wrap;gap:6px 24px}
+.site-foot a{color:var(--ink)}
+.site-foot a[aria-current="page"]{text-decoration:none;color:var(--steel-text)}
+
+@media (max-width:1100px){
+  .doc{grid-template-columns:minmax(0,68ch);grid-template-areas:"head" "index" "body";margin-left:var(--edge);padding-right:var(--edge)}
+  .index{position:static;margin-top:52px}
+  .index ol{columns:2;column-gap:28px}
+  .index a{break-inside:avoid}
+}
+@media (max-width:760px){
+  :root{--gap:30px;--edge:16px}
+  body{font-size:17px;line-height:1.55}
+  .top{gap:16px;padding-top:14px}
+  .top-back{display:none}
+  .doc{margin-left:22px;padding:110px 16px 100px var(--gap)}
+  .route-in{top:-58px;height:168px;width:70%}
+  .doc::before{top:109px}
+  .doc h2::before{width:15.5px;left:calc(-1 * var(--gap) - 7px)}
+  .doc::after{width:15.5px;left:-7px}
+  .doc section{margin-top:60px}
+  .index ol{columns:1}
+  .basis{grid-template-columns:1fr;gap:0}
+  .basis dd+dt{margin-top:8px}
+  table,thead,tbody,tr,th,td{display:block}
+  caption{display:block;width:100%}
+  thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  tr{padding:14px 0;border-bottom:1px solid var(--mist)}
+  td{border:0;padding:2px 0}
+  td[data-label]::before{content:attr(data-label);display:block;font-size:14px;color:var(--steel-text)}
+  td+td{margin-top:8px}
+  .site-foot{padding-bottom:40px}
+}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+@media print{.top,.index,.route-in,.skip,.action{display:none}.doc{display:block;margin:0;padding:0 0 0 24px}.doc::before,.doc::after{display:none}.doc h2::before{left:-24px}}

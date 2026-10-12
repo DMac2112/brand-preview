@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- V6 mark: the hairline route with one stop on it. Follows the system light/dark setting. -->
+  <style>
+    .bg{fill:#F7F8F9}.route{fill:none;stroke:#8E959C;stroke-width:2.2;stroke-linecap:round}.stop{fill:#17191C}
+    @media (prefers-color-scheme:dark){.bg{fill:#111315}.route{stroke:#7D848B}.stop{fill:#ECEEF0}}
+  </style>
+  <rect class="bg" width="32" height="32"/>
+  <path class="route" d="M22.5 -2C22.5 8.5 10.5 9 10.5 16S22.5 23.5 22.5 34"/>
+  <rect class="stop" x="3.5" y="14.2" width="14" height="3.6"/>
+</svg>

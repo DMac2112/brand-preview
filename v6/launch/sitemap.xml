@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Put at the ROOT of the real domain (https://TWOJA-DOMENA.pl/sitemap.xml) at launch.
+     Replace TWOJA-DOMENA.pl with the real domain and update <lastmod> when a page changes. See ../LAUNCH-SEO.md. -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://TWOJA-DOMENA.pl/</loc>
+    <lastmod>2026-10-12</lastmod>
+  </url>
+  <url>
+    <loc>https://TWOJA-DOMENA.pl/polityka-prywatnosci.html</loc>
+    <lastmod>2026-10-12</lastmod>
+  </url>
+  <url>
+    <loc>https://TWOJA-DOMENA.pl/cookies.html</loc>
+    <lastmod>2026-10-12</lastmod>
+  </url>
+</urlset>
