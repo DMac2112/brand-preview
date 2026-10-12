@@ -1,0 +1,12 @@
+
+.retro-review,.retro-review *{box-sizing:border-box;font-family:Overpass,Arial,sans-serif;letter-spacing:normal;line-height:1.35}
+.retro-review{position:relative;z-index:40;background:#eaf0ed;color:#203c34;border-bottom:1px solid #b8c8c1;font-size:16px;padding:8px max(18px,calc((100vw - 1260px)/2));display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 20px}
+.retro-review a{color:#203c34;min-height:48px;min-width:0;text-decoration:none;margin:0;padding:10px 0;display:inline-flex;align-items:center;overflow-wrap:normal;vertical-align:initial}
+.retro-review-brand{font-weight:700;font-size:17px;gap:10px}.retro-review-brand small{font-weight:400;font-size:14px}
+.retro-review summary{list-style:none;display:flex;align-items:center;justify-content:center;gap:12px;cursor:pointer;min-height:48px;min-width:170px;font-size:16px;font-weight:700;color:#203c34;background:#fff;border:1px solid #869f93;border-radius:3px;padding:9px 14px;margin:0;text-decoration:none}
+.retro-review summary::-webkit-details-marker{display:none}.retro-review summary::after{content:"⌄";font-size:20px}.retro-review details[open] summary::after{content:"⌃"}
+.retro-review details{position:relative;padding:0;margin:0;min-width:0}.retro-review-menu{position:absolute;right:0;top:calc(100% + 6px);width:320px;max-width:calc(100vw - 36px);background:white;border:1px solid #869f93;padding:8px;box-shadow:0 6px 22px #203c3422;display:grid;gap:2px}
+.retro-review-menu a{display:flex;gap:12px;align-items:center;min-height:48px;padding:10px 12px;border-radius:2px;font-size:16px}.retro-review-menu a:hover{background:#eaf0ed}.retro-review-menu a[aria-current=page]{background:#203c34;color:white;font-weight:700}.retro-review-menu a span{font-size:14px;font-weight:700;min-width:26px}
+.retro-review .retro-preview-note{flex-basis:100%;font-size:13px;margin:0;padding:0 0 3px;max-width:none;color:#40584d}.retro-review :focus-visible{outline:3px solid #b3141f;outline-offset:3px}
+@media(max-width:460px){.retro-review{padding:8px 12px;gap:3px 10px}.retro-review-brand{font-size:16px;flex-direction:column;align-items:flex-start!important;gap:0}.retro-review-brand small{font-size:12px}.retro-review summary{min-width:148px;padding:9px 11px;font-size:15px}.retro-review .retro-preview-note{font-size:12px}}
+@media print{.retro-review{display:none!important}}
