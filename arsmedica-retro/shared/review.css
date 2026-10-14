@@ -10,3 +10,10 @@
 .retro-review .retro-preview-note{flex-basis:100%;font-size:13px;margin:0;padding:0 0 3px;max-width:none;color:#40584d}.retro-review :focus-visible{outline:3px solid #b3141f;outline-offset:3px}
 @media(max-width:460px){.retro-review{padding:8px 12px;gap:3px 10px}.retro-review-brand{font-size:16px;flex-direction:column;align-items:flex-start!important;gap:0}.retro-review-brand small{font-size:12px}.retro-review summary{min-width:148px;padding:9px 11px;font-size:15px}.retro-review .retro-preview-note{font-size:12px}}
 @media print{.retro-review{display:none!important}}
+
+/* Powrót do całej prezentacji bez dodatkowego wiersza w pasku wersji. */
+.retro-showcase-return{box-sizing:border-box;padding:8px max(18px,calc((100vw - 1260px)/2));background:#eaf0ed;border-bottom:1px solid #b8c8c1}
+a.retro-showcase-link{box-sizing:border-box;display:inline-flex;align-items:center;min-height:48px;max-width:100%;margin:0;padding:10px 0;color:#203c34;font:400 16px/1.35 Overpass,Arial,sans-serif;letter-spacing:normal;text-decoration:underline;text-underline-offset:3px}
+a.retro-showcase-link:focus-visible{outline:3px solid #b3141f;outline-offset:3px}
+@media(max-width:460px){.retro-showcase-return{padding:8px 12px}.retro-review{column-gap:8px}.retro-review a.retro-showcase-link{font-size:14px;white-space:nowrap}.retro-review summary{min-width:0;padding:9px 8px;font-size:14px;gap:6px}}
+@media print{.retro-showcase-return{display:none!important}}
