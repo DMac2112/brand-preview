@@ -31,14 +31,14 @@
     const day=date.getUTCDay(), minutes=+parts.hour*60 + +parts.minute;
     const open=working(date)&&minutes>=480&&minutes<1080;
     let status;
-    if(open) status='Rejestracja POZ: otwarte do 18:00';
+    if(open) status='POZ (NFZ): otwarte do 18:00';
     else {
       const next=new Date(date);
       if(!working(next)||minutes>=1080) {
         next.setUTCDate(next.getUTCDate()+1);
         while(!working(next)) next.setUTCDate(next.getUTCDate()+1);
       }
-      status=`Rejestracja POZ: zamknięte. Otwarcie: ${days[next.getUTCDay()].toLocaleLowerCase('pl-PL')}, ${dateLabel(next)}, 8:00`;
+      status=`POZ (NFZ): zamknięte. Otwarcie: ${days[next.getUTCDay()].toLocaleLowerCase('pl-PL')}, ${dateLabel(next)}, 8:00`;
     }
     document.querySelectorAll('[data-status]').forEach(el=> {if(el.textContent!==status) el.textContent=status;});
     document.querySelector('.status-strip')?.classList.toggle('is-open',open);
